@@ -16,6 +16,7 @@ pillow = "*"
 opencv-python = "*"
 torch = "==1.3.1"
 torchvision = "==0.4.2"
+tqdm = "*"
 
 [requires]
 python_version = "3.7"
