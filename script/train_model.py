@@ -50,7 +50,7 @@ print('DataLoader Already')
 # Model  ################################################################
 net = model_init(model_name)
 
-# Transfer Training  ################################################################
+# Transfer Learning  ################################################################
 # Specify The Layers for updating
 params_to_update = []
 update_params_name = ['_fc.weight', '_fc.bias']
