@@ -9,7 +9,7 @@ from utils.model_init import model_init
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path
 from utils.dfdc_dataset import DeepfakeDataset_idx0
-from utils.trainer import train_model, save_model_weights
+from utils.trainer import train_model
 
 
 # Config  ################################################################
@@ -17,7 +17,7 @@ data_dir = '../input'
 seed = 0
 img_size = 224
 batch_size = 4
-epoch = 10
+epoch = 6
 model_name = 'efficientnet-b1'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = nn.BCEWithLogitsLoss()
