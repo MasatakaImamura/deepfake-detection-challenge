@@ -8,7 +8,7 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device):
     print('DFDC Training...')
     since = time.time()
     best_model_wts = copy.deepcopy(net.state_dict())
-    best_acc = 0.0
+    best_loss = 0.0
     net = net.to(device)
 
     for epoch in range(num_epoch):
@@ -55,20 +55,14 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device):
             print('')
 
             # deep copy the model
-            if phase == 'val' and epoch_acc > best_acc:
-                best_acc = epoch_acc
+            if phase == 'val' and epoch_loss < best_loss:
+                best_loss = epoch_loss
                 best_model_wts = copy.deepcopy(net.state_dict())
 
     time_elapsed = time.time() - since
     print('Training complete in {}'.format(str(datetime.timedelta(seconds=time_elapsed))))
-    print('Best val Acc: {:4f}'.format(best_acc))
+    print('Best val Acc: {:4f}'.format(best_loss))
 
     # load best model weights
     net.load_state_dict(best_model_wts)
-    return net, best_acc
-
-
-def save_model_weights(net, model_name, best_acc):
-    # Save Model
-    date = datetime.datetime.now().strftime('%Y%m%d')
-    torch.save(net.state_dict(), "../../model/{}_acc{:.3f}_{}.pth".format(model_name, best_acc, date))
+    return net, best_loss
