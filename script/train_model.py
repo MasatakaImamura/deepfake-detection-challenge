@@ -1,5 +1,5 @@
 from sklearn.model_selection import train_test_split
-
+import datetime
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -48,6 +48,7 @@ dataloader_dict = {
 print('DataLoader Already')
 
 # Model  ################################################################
+torch.cuda.empty_cache()
 net = model_init(model_name)
 
 # Transfer Learning  ################################################################
@@ -66,7 +67,8 @@ optimizer = optim.SGD(params=params_to_update, lr=0.001, momentum=0.9)
 print('Model Already')
 
 # Train  ################################################################
-net, best_acc = train_model(net, dataloader_dict, criterion, optimizer, num_epoch=epoch, device=device)
+net, best_loss = train_model(net, dataloader_dict, criterion, optimizer, num_epoch=epoch, device=device)
 
 # Save Model  ################################################################
-save_model_weights(net, model_name=model_name, best_acc=best_acc)
+date = datetime.datetime.now().strftime('%Y%m%d')
+torch.save(net.state_dict(), "../model/{}_acc{:.3f}_{}.pth".format(model_name, best_loss, date))
