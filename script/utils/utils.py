@@ -4,7 +4,7 @@ import pandas as pd
 
 import cv2
 import torch
-
+from facenet_pytorch import MTCNN, InceptionResnetV1
 
 def seed_everything(seed=1234):
     random.seed(seed)
@@ -78,3 +78,19 @@ def detect_face(img):
         # x,y,w,h=ratio*x,ratio*y,ratio*w,ratio*h
         crop_imgs.append(img[y:y + h, x:x + w])
     return crop_imgs
+
+
+def detect_face_mtcnn(img):
+    _img = img[np.newaxis, :, :, :]
+    mtcnn = MTCNN(keep_all=True)
+    boxes, probs, points = mtcnn.detect(_img, landmarks=True)
+
+    if boxes == []:
+        return []
+
+    x = int(boxes[0][0][0])
+    y = int(boxes[0][0][1])
+    z = int(boxes[0][0][2])
+    w = int(boxes[0][0][3])
+    crop_img = img[y:w, x:z]
+    return [crop_img]
