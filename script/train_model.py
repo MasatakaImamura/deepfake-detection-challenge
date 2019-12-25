@@ -34,8 +34,13 @@ mov_path = get_mov_path(metadata, data_dir, fake_per_real=1)
 train_mov_path, val_mov_path = train_test_split(mov_path, test_size=0.1, random_state=seed)
 
 # Dataset
-train_dataset = DeepfakeDataset_continuous(train_mov_path, metadata, transform=ImageTransform(img_size), phase='train')
-val_dataset = DeepfakeDataset_continuous(val_mov_path, metadata, transform=ImageTransform(img_size), phase='val')
+train_dataset = DeepfakeDataset_continuous(
+    train_mov_path, metadata, transform=ImageTransform(img_size),
+    phase='train', img_num=img_num, frame_window=frame_window)
+
+val_dataset = DeepfakeDataset_continuous(
+    val_mov_path, metadata, transform=ImageTransform(img_size),
+    phase='val', img_num=img_num, frame_window=frame_window)
 
 # DataLoader
 train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
