@@ -17,10 +17,13 @@ data_dir = '../input'
 seed = 0
 img_size = 224
 batch_size = 1
-epoch = 6
+epoch = 8
 model_name = 'resnet50'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = nn.BCEWithLogitsLoss()
+img_num = 5
+frame_window = 20
+
 
 # Set Seed
 seed_everything(seed)

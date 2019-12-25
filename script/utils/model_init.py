@@ -26,9 +26,6 @@ def model_init(model_name, pretrained=True):
     elif 'vgg' in model_name:
         model.classifier[6] = nn.Linear(in_features=4096, out_features=1)
 
-    elif 'efficientnet' in model_name:
-        model._fc = nn.Linear(in_features=model._fc.in_features, out_features=1)
-
     return model
 
 

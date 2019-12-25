@@ -3,7 +3,7 @@ from tqdm import tqdm
 import torch
 
 
-def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device):
+def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, model_name):
     print('')
     print('DFDC Training...')
     since = time.time()
