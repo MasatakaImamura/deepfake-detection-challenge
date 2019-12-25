@@ -11,9 +11,9 @@ def model_init(model_name, pretrained=True):
         'resnet152': models.resnet152(pretrained=pretrained),
         'vgg16': models.vgg16(pretrained=pretrained),
         'vgg19': models.vgg19(pretrained=pretrained),
-        'efficientnet-b1': EfficientNet.from_pretrained('efficientnet-b0'),
-        'efficientnet-b4': EfficientNet.from_pretrained('efficientnet-b4'),
-        'efficientnet-b7': EfficientNet.from_pretrained('efficientnet-b7')
+        'efficientnet-b0': EfficientNet.from_pretrained('efficientnet-b0', num_classes=1),
+        'efficientnet-b4': EfficientNet.from_pretrained('efficientnet-b4', num_classes=1),
+        'efficientnet-b7': EfficientNet.from_pretrained('efficientnet-b7', num_classes=1)
     }
 
     assert model_name in model_dict.keys()
