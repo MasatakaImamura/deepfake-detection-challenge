@@ -75,8 +75,9 @@ optimizer = optim.SGD(params=params_to_update, lr=0.001, momentum=0.9)
 print('Model Already')
 
 # Train  ################################################################
-net, best_loss = train_model(net, dataloader_dict, criterion, optimizer, num_epoch=epoch, device=device)
+net, best_loss = train_model(net, dataloader_dict, criterion, optimizer,
+                             num_epoch=epoch, device=device, model_name=model_name)
 
 # Save Model  ################################################################
 date = datetime.datetime.now().strftime('%Y%m%d')
-torch.save(net.state_dict(), "../model/{}_acc{:.3f}_{}.pth".format(model_name, best_loss, date))
+torch.save(net.state_dict(), "../model/{}_continue_acc{:.3f}_{}.pth".format(model_name, best_loss, date))
