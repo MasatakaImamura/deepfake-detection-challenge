@@ -5,7 +5,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
-from utils.model_init import model_init
+from utils.model_init import model_init, NormalCnn
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path
 from utils.dfdc_dataset import DeepfakeDataset_idx0, DeepfakeDataset_continuous
@@ -18,7 +18,7 @@ seed = 0
 img_size = 224
 batch_size = 1
 epoch = 6
-model_name = 'resnet50'
+model_name = 'test'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = nn.BCEWithLogitsLoss()
 
@@ -49,21 +49,9 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = model_init(model_name)
+net = NormalCnn()
 
-# Transfer Learning  ################################################################
-# Specify The Layers for updating
-params_to_update = []
-update_params_name = ['fc.weight', 'fc.bias']
-
-for name, param in net.named_parameters():
-    if name in update_params_name:
-        param.requires_grad = True
-        params_to_update.append(param)
-    else:
-        param.requires_grad = False
-
-optimizer = optim.SGD(params=params_to_update, lr=0.001, momentum=0.9)
+optimizer = optim.SGD(params=net.parameters(), lr=0.001, momentum=0.9)
 print('Model Already')
 
 # Train  ################################################################
