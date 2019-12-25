@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from .utils import get_img_from_mov, detect_face
+from .utils import get_img_from_mov, detect_face, detect_face_mtcnn
 
 
 class DeepfakeDataset_idx0(Dataset):
@@ -72,14 +72,14 @@ class DeepfakeDataset_continuous(Dataset):
             try:
                 image = get_img_from_mov(mov_path)[int(i*self.frame_window)]  # Only First Frame Face
                 # FaceCrop
-                image = detect_face(image)[0]
+                image = detect_face_mtcnn(image)
                 # Transform
                 image = self.transform(image, self.phase)
                 img_list.append(image)
             except:
                 pass
 
-        if img_list == []:
+        if len(img_list) == 0:
             label = 0.5
         else:
             img_list = torch.stack(img_list)
