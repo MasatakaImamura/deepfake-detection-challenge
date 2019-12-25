@@ -25,8 +25,11 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device):
             epoch_corrects = 0
 
             for inputs, labels, _ in tqdm(dataloader_dict[phase]):
-                if inputs == []:
+                if len(inputs) == 0:
                     continue
+                # Replace 4 Dim
+                if inputs.dim() == 5:
+                    inputs = inputs.squeeze(0)
                 inputs = inputs.to(device)
                 labels = labels.to(device)
                 optimizer.zero_grad()
