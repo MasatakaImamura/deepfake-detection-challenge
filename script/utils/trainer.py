@@ -8,7 +8,7 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device):
     print('DFDC Training...')
     since = time.time()
     best_model_wts = copy.deepcopy(net.state_dict())
-    best_loss = 0.0
+    best_loss = 1.0
     net = net.to(device)
 
     for epoch in range(num_epoch):
