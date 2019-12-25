@@ -25,6 +25,8 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device):
             epoch_corrects = 0
 
             for inputs, labels, _ in tqdm(dataloader_dict[phase]):
+                if inputs == []:
+                    continue
                 inputs = inputs.to(device)
                 labels = labels.to(device)
                 optimizer.zero_grad()
