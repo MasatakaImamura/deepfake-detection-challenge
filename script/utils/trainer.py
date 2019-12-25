@@ -36,7 +36,8 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
 
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = net(inputs)
-                    loss = criterion(outputs.view(-1), labels)
+                    outputs = torch.sigmoid(outputs.view(-1))
+                    loss = criterion(outputs, labels)
 
                     if phase == 'train':
                         loss.backward()
