@@ -63,6 +63,7 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
             if phase == 'val' and epoch_loss < best_loss:
                 best_loss = epoch_loss
                 best_model_wts = copy.deepcopy(net.state_dict())
+                torch.save(net.state_dict(), "../model/temp_{}.pth".format(model_name))
 
     time_elapsed = time.time() - since
     print('Training complete in {}'.format(str(datetime.timedelta(seconds=time_elapsed))))
