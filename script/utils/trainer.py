@@ -43,8 +43,7 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
                         loss.backward()
                         optimizer.step()
 
-                    epoch_loss += loss.item() * inputs.size(0)
-                    preds = torch.sigmoid(outputs.view(-1))
+                    epoch_loss += loss.item()
                     # replace binary
                     preds[preds > 0.5] = 1
                     preds[preds <= 0.5] = 0
