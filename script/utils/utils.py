@@ -80,9 +80,9 @@ def detect_face(img):
     return crop_imgs
 
 
-def detect_face_mtcnn(img):
+def detect_face_mtcnn(img, device):
     _img = img[np.newaxis, :, :, :]
-    mtcnn = MTCNN(keep_all=True)
+    mtcnn = MTCNN(keep_all=True, device=device).eval()
     boxes, probs, points = mtcnn.detect(_img, landmarks=True)
 
     if boxes == []:
@@ -94,3 +94,4 @@ def detect_face_mtcnn(img):
     w = int(boxes[0][0][3])
     crop_img = img[y:w, x:z]
     return [crop_img]
+

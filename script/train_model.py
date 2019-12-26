@@ -38,11 +38,11 @@ train_mov_path, val_mov_path = train_test_split(mov_path, test_size=0.1, random_
 
 # Dataset
 train_dataset = DeepfakeDataset_continuous(
-    train_mov_path, metadata, transform=ImageTransform(img_size),
+    train_mov_path, metadata, device, transform=ImageTransform(img_size),
     phase='train', img_num=img_num, frame_window=frame_window)
 
 val_dataset = DeepfakeDataset_continuous(
-    val_mov_path, metadata, transform=ImageTransform(img_size),
+    val_mov_path, metadata, device, transform=ImageTransform(img_size),
     phase='val', img_num=img_num, frame_window=frame_window)
 
 # DataLoader
