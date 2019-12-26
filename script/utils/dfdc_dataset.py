@@ -1,7 +1,13 @@
+import os
 import torch
 from torch.utils.data import Dataset, DataLoader
 
 from .utils import get_img_from_mov, detect_face, detect_face_mtcnn
+
+if os.name == 'nt':
+    sep = '\\'
+elif os.name == 'posix':
+    sep = '/'
 
 
 class DeepfakeDataset_idx0(Dataset):
@@ -60,7 +66,7 @@ class DeepfakeDataset_continuous(Dataset):
         mov_path = self.file_list[idx]
 
         # Label
-        label = self.metadata[self.metadata['mov'] == mov_path.split('\\')[-1]]['label'].values
+        label = self.metadata[self.metadata['mov'] == mov_path.split(sep)[-1]]['label'].values[0]
 
         if label == 'FAKE':
             label = 1.0
