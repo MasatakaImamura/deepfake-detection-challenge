@@ -23,6 +23,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = nn.BCEWithLogitsLoss()
 img_num = 5
 frame_window = 20
+train_mov_num = 200
 
 # Set Seed
 seed_everything(seed)
@@ -75,7 +76,7 @@ print('Model Already')
 
 # Train  ################################################################
 net, best_loss = train_model(net, dataloader_dict, criterion, optimizer,
-                             num_epoch=epoch, device=device, model_name=model_name)
+                             num_epoch=epoch, device=device, model_name=model_name, train_mov_num=train_mov_num)
 
 # Save Model  ################################################################
 date = datetime.datetime.now().strftime('%Y%m%d')
