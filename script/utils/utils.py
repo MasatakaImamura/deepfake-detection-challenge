@@ -85,13 +85,13 @@ def detect_face_mtcnn(img, device):
     mtcnn = MTCNN(keep_all=True, device=device).eval()
     boxes, probs, points = mtcnn.detect(_img, landmarks=True)
 
-    if boxes == []:
-        return []
+    if len(boxes) == 0:
+        raise ValueError('Error!')
 
     x = int(boxes[0][0][0])
     y = int(boxes[0][0][1])
     z = int(boxes[0][0][2])
     w = int(boxes[0][0][3])
     crop_img = img[y:w, x:z]
-    return [crop_img]
+    return crop_img
 
