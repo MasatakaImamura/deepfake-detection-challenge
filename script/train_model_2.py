@@ -7,7 +7,7 @@ import torch.optim as optim
 
 from utils.model_init import model_init
 from utils.data_augumentation import ImageTransform
-from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
+from utils.utils import seed_everything, get_metadata, get_mov_path
 from utils.dfdc_dataset import DeepfakeDataset_idx0, DeepfakeDataset_continuous
 from utils.trainer import train_model
 
@@ -18,23 +18,19 @@ seed = 0
 img_size = 224
 batch_size = 1
 epoch = 8
-model_name = 'resnet50'
+model_name = 'efficientnet-b0'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# criterion = nn.BCEWithLogitsLoss()
-criterion = nn.BCELoss()
-# Image Num per 1 movie
+criterion = nn.BCEWithLogitsLoss()
 img_num = 5
-# frame number for extracting image from movie
 frame_window = 20
-# Use movie number per 1 epoch
-real_mov_num = 20
+train_mov_num = 100
 
 # Set Seed
 seed_everything(seed)
 
 # Set Mov_file path  ################################################################
 metadata = get_metadata(data_dir)
-mov_path = get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=real_mov_num)
+mov_path = get_mov_path(metadata, data_dir, fake_per_real=1)
 
 # Preprocessing  ################################################################
 # Divide Train, Vaild Data
@@ -66,7 +62,7 @@ net = model_init(model_name)
 # Transfer Learning  ################################################################
 # Specify The Layers for updating
 params_to_update = []
-update_params_name = ['fc.weight', 'fc.bias']
+update_params_name = ['_fc.weight', '_fc.bias']
 
 for name, param in net.named_parameters():
     if name in update_params_name:
@@ -75,18 +71,14 @@ for name, param in net.named_parameters():
     else:
         param.requires_grad = False
 
-optimizer = optim.SGD(params=params_to_update, lr=0.001, momentum=0.9)
+optimizer = optim.RMSprop(params=params_to_update, lr=0.256,
+                          alpha=0.99, eps=1e-08, weight_decay=0.9, momentum=0.9, centered=False)
 print('Model Already')
 
 # Train  ################################################################
-net, best_loss, df_loss = train_model(net, dataloader_dict, criterion, optimizer,
-                                      num_epoch=epoch, device=device, model_name=model_name)
+net, best_loss = train_model(net, dataloader_dict, criterion, optimizer,
+                             num_epoch=epoch, device=device, model_name=model_name, train_mov_num=train_mov_num)
 
 # Save Model  ################################################################
 date = datetime.datetime.now().strftime('%Y%m%d')
-torch.save(net.state_dict(), "../model/{}_loss{:.3f}_{}.pth".format(model_name, best_loss, date))
-
-# Save Loss
-df_loss.to_csv('../loss/LossTable_{}_loss{:.3f}_{}.csv'.format(model_name, best_loss, date))
-
-plot_loss(df_loss, 'LossPlot_{}_loss{:.3f}_{}'.format(model_name, best_loss, date))
+torch.save(net.state_dict(), "../model/{}_continue_acc{:.3f}_{}.pth".format(model_name, best_loss, date))

@@ -1,6 +1,7 @@
 import random, os, glob
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import cv2
 import torch
@@ -29,10 +30,12 @@ def get_metadata(data_dir):
     return metadata
 
 
-def get_mov_path(metadata, data_dir, fake_per_real=1):
+def get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=500):
     # 1Real movie 1 fake
+    # real_mov_num: Number mov file for use
     mov_path = []
     real_list = metadata[metadata['label'] == 'REAL']['mov'].tolist()
+    real_list = random.sample(real_list, real_mov_num)
     for path in real_list:
         for i in range(fake_per_real):
             try:
@@ -95,3 +98,9 @@ def detect_face_mtcnn(img, device):
     crop_img = img[y:w, x:z]
     return crop_img
 
+
+def plot_loss(df_loss, figname):
+    plt.plot(df_loss['Train_loss'], label='Train')
+    plt.plot(df_loss['Val_loss'], label='Val')
+    plt.legend()
+    plt.savefig('../loss/{}.png'.format(figname))
