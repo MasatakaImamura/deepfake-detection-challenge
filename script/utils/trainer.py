@@ -3,7 +3,7 @@ from tqdm import tqdm
 import torch
 
 
-def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, model_name):
+def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, model_name, train_mov_num):
     print('')
     print('DFDC Training...')
     since = time.time()
@@ -24,7 +24,7 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
             epoch_loss = 0.0
             epoch_corrects = 0
 
-            for inputs, labels, _ in tqdm(dataloader_dict[phase]):
+            for i, (inputs, labels, _) in tqdm(enumerate(dataloader_dict[phase])):
                 if len(inputs) == 0:
                     continue
                 # Replace 4 Dim
@@ -56,6 +56,9 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
                 del inputs, labels
                 gc.collect()
                 torch.cuda.empty_cache()
+
+                if i > train_mov_num:
+                    break
 
             epoch_loss = epoch_loss / len(dataloader_dict[phase].dataset)
             epoch_acc = epoch_corrects / len(dataloader_dict[phase].dataset)
