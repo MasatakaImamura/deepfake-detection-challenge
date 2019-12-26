@@ -45,9 +45,13 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
 
                     epoch_loss += loss.item()
                     # replace binary
-                    preds[preds > 0.5] = 1
-                    preds[preds <= 0.5] = 0
-                    epoch_corrects += torch.sum(preds == labels).item()
+                    if preds.item() > 0.5:
+                        preds = 1
+                    else:
+                        preds = 0
+                    #
+                    if preds == labels.item():
+                        epoch_corrects += 1
 
                 del inputs, labels
                 gc.collect()
