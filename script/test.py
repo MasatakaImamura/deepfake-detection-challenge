@@ -35,15 +35,86 @@ seed_everything(seed)
 metadata = get_metadata(data_dir)
 mov_path = get_mov_path(metadata, data_dir, fake_per_real=1)
 
-print(mov_path[:5])
+# Preprocessing  ################################################################
+# Divide Train, Vaild Data
+train_mov_path, val_mov_path = train_test_split(mov_path, test_size=0.1, random_state=seed)
 
-imgs = get_img_from_mov(mov_path[0])
+# Dataset
+train_dataset = DeepfakeDataset_continuous(
+    train_mov_path, metadata, device, transform=ImageTransform(img_size),
+    phase='train', img_num=img_num, frame_window=frame_window)
 
-print(len(imgs))
-plt.imshow(imgs[0])
-plt.show()
+val_dataset = DeepfakeDataset_continuous(
+    val_mov_path, metadata, device, transform=ImageTransform(img_size),
+    phase='val', img_num=img_num, frame_window=frame_window)
 
-for i in range(30):
-    face = detect_face_mtcnn(imgs[i*5], device)
-    plt.imshow(cv2.resize(face[0], (224, 224)))
-    plt.show()
+# DataLoader
+train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+dataloader_dict = {
+    'train': train_dataloader,
+    'val': val_dataloader
+}
+
+i = 0
+
+
+mov_path = mov_path[0]
+transform = ImageTransform(resize=224)
+
+# Label
+label = metadata[metadata['mov'] == mov_path.split('/')[-1]]['label'].values[0]
+
+# Movie to Image
+# img_list = []
+# for i in range(int(20)):
+#     image = get_img_from_mov(mov_path)[int(i*10)]  # Only First Frame Face
+#     # FaceCrop
+#     image = detect_face_mtcnn(image, device)
+#     # Transform
+#     image = transform(image, 'train')
+#     img_list.append(image)
+#
+# img_list = torch.stack(img_list)
+#
+# print(img_list.size())
+
+
+for img, label, _ in train_dataloader:
+
+    img = img.squeeze(0)
+
+    model = model_init(model_name)
+
+    out = model(img)
+    preds = torch.sigmoid(out.view(-1)).mean().unsqueeze(0).to(device)
+
+    print(label)
+    print(preds)
+    loss = criterion(preds, label)
+    print(loss)
+
+    break
+
+
+
+
+# if len(img) == 0:
+#
+# print(img)
+# print(label)
+# print(label.size())
+# print(label.item())
+#
+#
+# model = model_init(model_name)
+# z = torch.randn(20, 3, 224, 224)
+#
+# out = model(z)
+# pred = torch.sigmoid(out.view(-1)).mean().unsqueeze(0).to(device)
+# loss = criterion(pred, label)
+# print(pred)
+# print(loss)
+# print(loss.size())
+# print(loss.item())
+# print(pred.item())

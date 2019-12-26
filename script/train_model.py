@@ -24,7 +24,6 @@ criterion = nn.BCEWithLogitsLoss()
 img_num = 5
 frame_window = 20
 
-
 # Set Seed
 seed_everything(seed)
 
