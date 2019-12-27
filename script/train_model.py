@@ -17,17 +17,18 @@ data_dir = '../input'
 seed = 0
 img_size = 224
 batch_size = 1
-epoch = 8
-model_name = 'resnet50'
+epoch = 24
+model_name = 'resnet152'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# criterion = nn.BCEWithLogitsLoss()
-criterion = nn.BCELoss()
+criterion = nn.BCEWithLogitsLoss()
+# criterion = nn.BCELoss()
 # Image Num per 1 movie
 img_num = 5
 # frame number for extracting image from movie
 frame_window = 20
 # Use movie number per 1 epoch
-real_mov_num = 20
+# 20: 10min/epoch  40: 20min/epoch
+real_mov_num = 40
 
 # Set Seed
 seed_everything(seed)
@@ -88,5 +89,4 @@ torch.save(net.state_dict(), "../model/{}_loss{:.3f}_{}.pth".format(model_name, 
 
 # Save Loss
 df_loss.to_csv('../loss/LossTable_{}_loss{:.3f}_{}.csv'.format(model_name, best_loss, date))
-
 plot_loss(df_loss, 'LossPlot_{}_loss{:.3f}_{}'.format(model_name, best_loss, date))
