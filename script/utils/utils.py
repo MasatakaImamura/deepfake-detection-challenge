@@ -7,6 +7,7 @@ import cv2
 import torch
 from facenet_pytorch import MTCNN, InceptionResnetV1
 
+
 def seed_everything(seed=1234):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)

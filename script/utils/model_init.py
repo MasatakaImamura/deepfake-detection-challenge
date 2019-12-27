@@ -2,6 +2,7 @@ from torchvision import models
 import torch.nn as nn
 import torch.nn.functional as F
 from efficientnet_pytorch import EfficientNet
+from facenet_pytorch import InceptionResnetV1
 
 
 def model_init(model_name, pretrained=True):
@@ -13,7 +14,8 @@ def model_init(model_name, pretrained=True):
         'vgg19': models.vgg19(pretrained=pretrained),
         'efficientnet-b0': EfficientNet.from_pretrained('efficientnet-b0', num_classes=1),
         'efficientnet-b4': EfficientNet.from_pretrained('efficientnet-b4', num_classes=1),
-        'efficientnet-b7': EfficientNet.from_pretrained('efficientnet-b7', num_classes=1)
+        'efficientnet-b7': EfficientNet.from_pretrained('efficientnet-b7', num_classes=1),
+        'facenet': InceptionResnetV1(pretrained='vggface2', num_classes=1, classify=True)
     }
 
     assert model_name in model_dict.keys()
