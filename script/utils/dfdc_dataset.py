@@ -9,13 +9,16 @@ if os.name == 'nt':
 elif os.name == 'posix':
     sep = '/'
 
-
-class DeepfakeDataset_idx0(Dataset):
-    def __init__(self, file_list, metadata, transform=None, phase='train'):
+# 動画から1枚だけの画像を出力する
+# getting_idxで動画のフレームから任意の位置の画像をピックアップする
+class DeepfakeDataset(Dataset):
+    def __init__(self, file_list, metadata, device, transform=None, phase='train', getting_idx=0):
         self.file_list = file_list
         self.metadata = metadata
         self.transform = transform
+        self.device = device
         self.phase = phase
+        self.getting_idx = getting_idx
 
     def __len__(self):
         return len(self.file_list)
@@ -25,23 +28,23 @@ class DeepfakeDataset_idx0(Dataset):
         mov_path = self.file_list[idx]
 
         # Label
-        label = self.metadata[self.metadata['mov'] == mov_path.split('\\')[-1]]['label'].values
+        label = self.metadata[self.metadata['mov'] == mov_path.split(sep)[-1]]['label'].values
 
         if label == 'FAKE':
-            label = 1.0
+            label = 1
         else:
-            label = 0.0
+            label = 0
 
         # Movie to Image
         try:
-            image = get_img_from_mov(mov_path)[0]  # Only First Frame Face
+            image = get_img_from_mov(mov_path)[self.getting_idx]  # Specified Frame Only
             # FaceCrop
-            image = detect_face(image)[0]
+            image = detect_face_mtcnn(image, self.device)
             # Transform
             image = self.transform(image, self.phase)
         except:
-            image = torch.ones((3, self.transform.size, self.transform.size), dtype=torch.float)
-            label = 1.0
+            image = torch.randn((3, self.transform.size, self.transform.size), dtype=torch.float)
+            label = 1
 
         return image, label, mov_path
 
@@ -69,9 +72,9 @@ class DeepfakeDataset_continuous(Dataset):
         label = self.metadata[self.metadata['mov'] == mov_path.split(sep)[-1]]['label'].values[0]
 
         if label == 'FAKE':
-            label = 1.0
+            label = 1
         else:
-            label = 0.0
+            label = 0
 
         # Movie to Image
         img_list = []
@@ -84,11 +87,9 @@ class DeepfakeDataset_continuous(Dataset):
                 image = self.transform(image, self.phase)
                 img_list.append(image)
             except:
-                pass
+                image = torch.randn(3, 224, 224)
+                img_list.append(image)
 
-        if len(img_list) == 0:
-            label = 0.5
-        else:
-            img_list = torch.stack(img_list)
+        img_list = torch.stack(img_list)
 
         return img_list, label, mov_path

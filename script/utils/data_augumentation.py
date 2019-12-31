@@ -54,8 +54,8 @@ class ImageTransform:
         self.data_transform = {
             'train': transforms.Compose([
                 Resize(resize),
-                RandomFlip(),
-                RandomRotate(),
+                # RandomFlip(),
+                # RandomRotate(),
                 transforms.ToTensor(),
             ]),
             'val': transforms.Compose([

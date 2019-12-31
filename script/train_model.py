@@ -8,26 +8,26 @@ import torch.optim as optim
 from utils.model_init import model_init
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
-from utils.dfdc_dataset import DeepfakeDataset_idx0, DeepfakeDataset_continuous
-from utils.trainer import train_model
+from utils.dfdc_dataset import DeepfakeDataset
+from utils.trainer import train_model, train_model_2
 
+
+# 1枚の画像のみをピックアップして学習する
 
 # Config  ################################################################
 data_dir = '../input'
 seed = 0
 img_size = 224
-batch_size = 1
-epoch = 24
-model_name = 'resnet152'
+batch_size = 4
+epoch = 10
+model_name = 'efficientnet-b0'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-criterion = nn.BCEWithLogitsLoss()
-# criterion = nn.BCELoss()
+criterion = nn.CrossEntropyLoss()
 # Image Num per 1 movie
-img_num = 5
+img_num = 10
 # frame number for extracting image from movie
-frame_window = 20
+frame_window = 10
 # Use movie number per 1 epoch
-# 20: 10min/epoch  40: 20min/epoch
 real_mov_num = 40
 
 # Set Seed
@@ -42,13 +42,11 @@ mov_path = get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=real_m
 train_mov_path, val_mov_path = train_test_split(mov_path, test_size=0.1, random_state=seed)
 
 # Dataset
-train_dataset = DeepfakeDataset_continuous(
-    train_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='train', img_num=img_num, frame_window=frame_window)
+train_dataset = DeepfakeDataset(
+    train_mov_path, metadata, device, transform=ImageTransform(img_size), phase='train', getting_idx=0)
 
-val_dataset = DeepfakeDataset_continuous(
-    val_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='val', img_num=img_num, frame_window=frame_window)
+val_dataset = DeepfakeDataset(
+    val_mov_path, metadata, device, transform=ImageTransform(img_size), phase='val', getting_idx=0)
 
 # DataLoader
 train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -62,12 +60,16 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = model_init(model_name)
+net = model_init(model_name, classes=2)
+# net = convLSTM(out_classes=2)
+# net = convLSTM_resnet()
 
 # Transfer Learning  ################################################################
 # Specify The Layers for updating
+# Resnet: fc.weight, fc.bias
+# Efficientnet: _fc.weight, _fc.bias
 params_to_update = []
-update_params_name = ['fc.weight', 'fc.bias']
+update_params_name = ['_fc.weight', '_fc.bias']
 
 for name, param in net.named_parameters():
     if name in update_params_name:
@@ -76,7 +78,7 @@ for name, param in net.named_parameters():
     else:
         param.requires_grad = False
 
-optimizer = optim.SGD(params=params_to_update, lr=0.001, momentum=0.9)
+optimizer = optim.Adam(params=params_to_update)
 print('Model Already')
 
 # Train  ################################################################

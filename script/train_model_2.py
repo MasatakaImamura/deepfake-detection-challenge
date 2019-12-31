@@ -5,23 +5,25 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
-from utils.model_init import model_init
+from utils.model_init import model_init, convLSTM, convLSTM_resnet
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
-from utils.dfdc_dataset import DeepfakeDataset_idx0, DeepfakeDataset_continuous
+from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous
 from utils.trainer import train_model
+
+# ConvolutionLSTMを使用
+# Datasetは連続した画像を出力するように設定
 
 
 # Config  ################################################################
 data_dir = '../input'
 seed = 0
 img_size = 224
-batch_size = 1
-epoch = 24
+batch_size = 4
+epoch = 10
 model_name = 'efficientnet-b4'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-criterion = nn.BCEWithLogitsLoss()
-# criterion = nn.BCELoss()
+criterion = nn.CrossEntropyLoss()
 # Image Num per 1 movie
 img_num = 5
 # frame number for extracting image from movie
@@ -62,22 +64,21 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = model_init(model_name)
+net = convLSTM(out_classes=2)
 
 # Transfer Learning  ################################################################
 # Specify The Layers for updating
-params_to_update = []
-update_params_name = ['_fc.weight', '_fc.bias']
+# params_to_update = []
+# update_params_name = ['_fc.weight', '_fc.bias']
+#
+# for name, param in net.named_parameters():
+#     if name in update_params_name:
+#         param.requires_grad = True
+#         params_to_update.append(param)
+#     else:
+#         param.requires_grad = False
 
-for name, param in net.named_parameters():
-    if name in update_params_name:
-        param.requires_grad = True
-        params_to_update.append(param)
-    else:
-        param.requires_grad = False
-
-optimizer = optim.RMSprop(params=params_to_update, lr=0.256,
-                          alpha=0.99, eps=1e-08, weight_decay=0.9, momentum=0.9, centered=False)
+optimizer = optim.Adam(params=net.parameters())
 print('Model Already')
 
 # Train  ################################################################

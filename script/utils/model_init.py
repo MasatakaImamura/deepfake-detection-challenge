@@ -1,20 +1,22 @@
 from torchvision import models
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from efficientnet_pytorch import EfficientNet
+from utils.convlstm import ConvLSTM
 from facenet_pytorch import InceptionResnetV1
 
 
-def model_init(model_name, pretrained=True):
+def model_init(model_name, pretrained=True, classes=1):
 
     model_dict = {
         'resnet50': models.resnet50(pretrained=pretrained),
         'resnet152': models.resnet152(pretrained=pretrained),
         'vgg16': models.vgg16(pretrained=pretrained),
         'vgg19': models.vgg19(pretrained=pretrained),
-        'efficientnet-b0': EfficientNet.from_pretrained('efficientnet-b0', num_classes=1),
-        'efficientnet-b4': EfficientNet.from_pretrained('efficientnet-b4', num_classes=1),
-        'efficientnet-b7': EfficientNet.from_pretrained('efficientnet-b7', num_classes=1),
+        'efficientnet-b0': EfficientNet.from_pretrained('efficientnet-b0', num_classes=classes),
+        'efficientnet-b4': EfficientNet.from_pretrained('efficientnet-b4', num_classes=classes),
+        'efficientnet-b7': EfficientNet.from_pretrained('efficientnet-b7', num_classes=classes),
         'facenet': InceptionResnetV1(pretrained='vggface2', num_classes=1, classify=True)
     }
 
@@ -23,50 +25,77 @@ def model_init(model_name, pretrained=True):
     model = model_dict[model_name]
 
     if 'resnet' in model_name:
-        model.fc = nn.Linear(in_features=model.fc.in_features, out_features=1)
+        model.fc = nn.Linear(in_features=model.fc.in_features, out_features=classes)
 
     elif 'vgg' in model_name:
-        model.classifier[6] = nn.Linear(in_features=4096, out_features=1)
+        model.classifier[6] = nn.Linear(in_features=4096, out_features=classes)
 
     return model
 
 
-class NormalCnn(nn.Module):
-    def __init__(self):
-        super(NormalCnn, self).__init__()
-        self.convrelupool_1 = nn.Sequential(
-            nn.Conv2d(3, 6, 5),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2)
+class convLSTM(nn.Module):
+    def __init__(self, out_classes):
+        super(convLSTM, self).__init__()
+        self.lstm = ConvLSTM(input_size=(224, 224), input_dim=3, hidden_dim=20,
+                             kernel_size=(3, 3), num_layers=1, batch_first=True)
+
+        self.block1 = nn.Sequential(
+            nn.Conv2d(20, 64, kernel_size=5, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True)
         )
-        self.convrelupool_2 = nn.Sequential(
-            nn.Conv2d(6, 16, 5),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2)
-        )
-        self.convrelupool_3 = nn.Sequential(
-            nn.Conv2d(16, 25, 5),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2)
-        )
-        self.convrelupool_4 = nn.Sequential(
-            nn.Conv2d(25, 50, 5),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2)
+        self.pool = nn.MaxPool2d(2)
+
+        self.block2 = nn.Sequential(
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True)
         )
 
-        self.fc_1 = nn.Linear(50 * 10 * 10, 1024)
-        self.fc_2 = nn.Linear(1024, 128)
-        self.fc_3 = nn.Linear(128, 1)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+
+        self.fc = nn.Linear(128*2, out_classes)
 
     def forward(self, x):
-        x = self.convrelupool_1(x)
-        x = self.convrelupool_2(x)
-        x = self.convrelupool_3(x)
-        x = self.convrelupool_4(x)
-        x = x.view(-1, 512 * 10 * 10)
-        x = F.relu(self.fc_1(x))
-        x = F.relu(self.fc_2(x))
-        x = self.fc_3(x)
+        _, x = self.lstm(x)
+        x1 = x[0][0]
+        x2 = x[0][1]
+
+        x1 = self.block1(x1)
+        x1 = self.pool(x1)
+        x1 = self.block2(x1)
+        x1 = self.avgpool(x1)
+        x1 = x1.view(x1.size()[0], -1)
+
+        x2 = self.block1(x2)
+        x2 = self.pool(x2)
+        x2 = self.block2(x2)
+        x2 = self.avgpool(x2)
+        x2 = x2.view(x2.size()[0], -1)
+
+        x = torch.cat((x1, x2), dim=1)
+        x = self.fc(x)
 
         return x
+
+
+class convLSTM_resnet(nn.Module):
+    def __init__(self, model_name='resnet50', input_size=224, lstm_hidden_dim=20, lstm_num_layer=1, out_classes=2):
+        super(convLSTM_resnet, self).__init__()
+        self.lstm = ConvLSTM(input_size=(input_size, input_size), input_dim=3, hidden_dim=lstm_hidden_dim,
+                             kernel_size=(3, 3), num_layers=lstm_num_layer, batch_first=True)
+
+        self.resnet = model_init(model_name, classes=out_classes)
+        self.resnet.conv1 = nn.Conv2d(lstm_hidden_dim, 64, kernel_size=(7, 7),
+                                      stride=(2, 2), padding=(3, 3), bias=False)
+
+        assert 'resnet' in model_name, "You must use 'Resnet' Model. Please Check ModelName"
+
+    def forward(self, x):
+        _, x = self.lstm(x)
+        # x1 = x[0][0]
+        x2 = x[0][1]
+
+        x2 = self.resnet(x2)
+
+        return x2
