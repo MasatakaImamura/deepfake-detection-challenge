@@ -36,7 +36,8 @@ def get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=500):
     # real_mov_num: Number mov file for use
     mov_path = []
     real_list = metadata[metadata['label'] == 'REAL']['mov'].tolist()
-    real_list = random.sample(real_list, real_mov_num)
+    if real_mov_num is not None:
+        real_list = random.sample(real_list, real_mov_num)
     for path in real_list:
         for i in range(fake_per_real):
             try:

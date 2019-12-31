@@ -18,17 +18,14 @@ from utils.trainer import train_model, train_model_2
 data_dir = '../input'
 seed = 0
 img_size = 224
-batch_size = 4
+batch_size = 32
 epoch = 10
 model_name = 'efficientnet-b0'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = nn.CrossEntropyLoss()
-# Image Num per 1 movie
-img_num = 10
-# frame number for extracting image from movie
-frame_window = 10
 # Use movie number per 1 epoch
-real_mov_num = 40
+# If set "None", all real movies are used
+real_mov_num = 100
 
 # Set Seed
 seed_everything(seed)

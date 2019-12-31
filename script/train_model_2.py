@@ -29,7 +29,7 @@ img_num = 5
 # frame number for extracting image from movie
 frame_window = 20
 # Use movie number per 1 epoch
-# 20: 10min/epoch  40: 20min/epoch
+# If set "None", all real movies are used
 real_mov_num = 40
 
 # Set Seed

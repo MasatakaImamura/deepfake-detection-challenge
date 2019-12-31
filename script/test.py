@@ -11,7 +11,7 @@ import torch.optim as optim
 from utils.model_init import model_init, convLSTM, convLSTM_resnet
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov
-from utils.dfdc_dataset import DeepfakeDataset_idx0, DeepfakeDataset_continuous, DeepfakeDataset_continuous_concat
+from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous
 from utils.trainer import train_model
 from facenet_pytorch import InceptionResnetV1, MTCNN
 
@@ -27,8 +27,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = nn.CrossEntropyLoss()
 img_num = 5
 frame_window = 20
-real_mov_num = 50
-
+real_mov_num = None
 
 # Set Seed
 seed_everything(seed)
@@ -64,23 +63,4 @@ label = torch.zeros(4)
 img = img.to(device)
 label = label.to(device)
 
-# model = model_init(model_name, classes=2)
-# print(model)
-#
-# print(model.conv1.in_channels)
-# model.conv1 = nn.Conv2d(20, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-#
-# print('#'*30)
-# print(model)
-#
-# model = convLSTM(out_classes=2)
-# print(model)
-
-model = convLSTM_resnet()
-model = model.to(device)
-print(model)
-
-out = model(img)
-print(out)
-loss = criterion(out, label.long())
-print(loss)
+print(len(metadata[metadata['label'] == 'REAL']))
