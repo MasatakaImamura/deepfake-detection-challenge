@@ -34,27 +34,20 @@ def model_init(model_name, pretrained=True, classes=1):
 
 
 class convLSTM(nn.Module):
-    def __init__(self, out_classes):
+    def __init__(self, input_size=224, lstm_hidden_dim=20, lstm_num_layer=1, out_classes=2):
         super(convLSTM, self).__init__()
-        self.lstm = ConvLSTM(input_size=(224, 224), input_dim=3, hidden_dim=20,
-                             kernel_size=(3, 3), num_layers=1, batch_first=True)
+        self.lstm = ConvLSTM(input_size=(input_size, input_size), input_dim=3, hidden_dim=lstm_hidden_dim,
+                             kernel_size=(3, 3), num_layers=lstm_num_layer, batch_first=True)
 
         self.block1 = nn.Sequential(
-            nn.Conv2d(20, 64, kernel_size=5, stride=2, padding=1),
+            nn.Conv2d(lstm_hidden_dim, 64, kernel_size=7, stride=2, padding=1),
             nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True)
-        )
-        self.pool = nn.MaxPool2d(2)
-
-        self.block2 = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(128),
             nn.ReLU(inplace=True)
         )
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
-        self.fc = nn.Linear(128*2, out_classes)
+        self.fc = nn.Linear(64*2, out_classes)
 
     def forward(self, x):
         _, x = self.lstm(x)
@@ -62,14 +55,10 @@ class convLSTM(nn.Module):
         x2 = x[0][1]
 
         x1 = self.block1(x1)
-        x1 = self.pool(x1)
-        x1 = self.block2(x1)
         x1 = self.avgpool(x1)
         x1 = x1.view(x1.size()[0], -1)
 
         x2 = self.block1(x2)
-        x2 = self.pool(x2)
-        x2 = self.block2(x2)
         x2 = self.avgpool(x2)
         x2 = x2.view(x2.size()[0], -1)
 

@@ -57,10 +57,12 @@ train_mov_path, val_mov_path = train_test_split(mov_path, test_size=0.1, random_
 #     'val': val_dataloader
 # }
 
+model = model_init(model_name)
+print(model)
 
-img = torch.randn(4, 10, 3, 224, 224)
-label = torch.zeros(4)
-img = img.to(device)
-label = label.to(device)
-
-print(len(metadata[metadata['label'] == 'REAL']))
+# img = torch.randn(4, 10, 3, 224, 224)
+# label = torch.zeros(4)
+# img = img.to(device)
+# label = label.to(device)
+#
+# print(len(metadata[metadata['label'] == 'REAL']))
