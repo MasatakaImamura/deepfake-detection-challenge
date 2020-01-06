@@ -45,24 +45,19 @@ class convLSTM(nn.Module):
             nn.ReLU(inplace=True)
         )
 
+        self.bn = nn.BatchNorm2d(lstm_hidden_dim)
+
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
-        self.fc = nn.Linear(64*2, out_classes)
+        self.fc = nn.Linear(64, out_classes)
 
     def forward(self, x):
         _, x = self.lstm(x)
-        x1 = x[0][0]
-        x2 = x[0][1]
-
-        x1 = self.block1(x1)
-        x1 = self.avgpool(x1)
-        x1 = x1.view(x1.size()[0], -1)
-
-        x2 = self.block1(x2)
-        x2 = self.avgpool(x2)
-        x2 = x2.view(x2.size()[0], -1)
-
-        x = torch.cat((x1, x2), dim=1)
+        x = x[0][0]
+        x = self.bn(x)
+        x = self.block1(x)
+        x = self.avgpool(x)
+        x = x.view(x.size()[0], -1)
         x = self.fc(x)
 
         return x

@@ -18,8 +18,8 @@ from utils.trainer import train_model
 # Config  ################################################################
 data_dir = '../input'
 seed = 0
-img_size = 224
-batch_size = 4
+img_size = 64
+batch_size = 8
 epoch = 10
 model_name = 'convLSTM'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -30,7 +30,7 @@ img_num = 20
 frame_window = 10
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
-real_mov_num = None
+real_mov_num = 50
 
 # Set Seed
 seed_everything(seed)
@@ -46,11 +46,11 @@ train_mov_path, val_mov_path = train_test_split(mov_path, test_size=0.1, random_
 # Dataset
 train_dataset = DeepfakeDataset_continuous(
     train_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='train', img_num=img_num, frame_window=frame_window)
+    phase='train', img_size=img_size, img_num=img_num, frame_window=frame_window)
 
 val_dataset = DeepfakeDataset_continuous(
     val_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='val', img_num=img_num, frame_window=frame_window)
+    phase='val', img_size=img_size, img_num=img_num, frame_window=frame_window)
 
 # DataLoader
 train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -64,9 +64,9 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = convLSTM(out_classes=2)
+net = convLSTM(input_size=img_size, lstm_hidden_dim=10, lstm_num_layer=1, out_classes=2)
 
-# Transfer Learning  ################################################################
+# Setting Optimizer  ################################################################
 # Specify The Layers for updating
 # params_to_update = []
 # update_params_name = ['_fc.weight', '_fc.bias']

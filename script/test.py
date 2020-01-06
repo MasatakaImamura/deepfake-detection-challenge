@@ -23,7 +23,8 @@ img_size = 224
 batch_size = 4
 epoch = 8
 model_name = 'resnet50'
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = 'cpu'
 criterion = nn.CrossEntropyLoss()
 img_num = 5
 frame_window = 20
@@ -33,36 +34,21 @@ real_mov_num = None
 seed_everything(seed)
 
 # Set Mov_file path  ################################################################
+
+from PIL import Image, ImageDraw
+import numpy as np
+
 metadata = get_metadata(data_dir)
 mov_path = get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=real_mov_num)
 
-# Preprocessing  ################################################################
-# Divide Train, Vaild Data
-train_mov_path, val_mov_path = train_test_split(mov_path, test_size=0.1, random_state=seed)
-
-# Dataset
-# train_dataset = DeepfakeDataset_continuous(
-#     train_mov_path, metadata, device, transform=ImageTransform(img_size),
-#     phase='train', img_num=img_num, frame_window=frame_window)
+mov = get_img_from_mov(mov_path[0])
+img = mov[80]
 #
-# val_dataset = DeepfakeDataset_continuous(
-#     val_mov_path, metadata, device, transform=ImageTransform(img_size),
-#     phase='val', img_num=img_num, frame_window=frame_window)
-#
-# # DataLoader
-# train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-# val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-# dataloader_dict = {
-#     'train': train_dataloader,
-#     'val': val_dataloader
-# }
+# img = Image.open("D:\\1.jpg")
 
-model = model_init(model_name)
-print(model)
+face, points, boxes = detect_face_mtcnn(np.array(img), device)
 
-# img = torch.randn(4, 10, 3, 224, 224)
-# label = torch.zeros(4)
-# img = img.to(device)
-# label = label.to(device)
-#
-# print(len(metadata[metadata['label'] == 'REAL']))
+print(face.shape)
+print(points.shape)
+
+print(points)
