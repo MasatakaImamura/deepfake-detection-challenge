@@ -95,3 +95,29 @@ class DeepfakeDataset_continuous(Dataset):
         img_list = torch.stack(img_list)
 
         return img_list, label, mov_path
+
+
+def face_img_generator(mov_path, metadata, device, transform=None, phase='train', frame_window=5):
+    # mov_pathからラベルを取得
+    label = metadata[metadata['mov'] == mov_path.split(sep)[-1]]['label'].values[0]
+
+    if label == 'FAKE':
+        label = 1
+    else:
+        label = 0
+
+    idx = 0
+
+    while True:
+        try:
+            image = get_img_from_mov(mov_path)[idx]
+            image = detect_face_mtcnn(image, device)
+            image = transform(image, phase)
+        except:
+            image = None
+
+        yield image, label, idx
+
+        idx += frame_window
+
+

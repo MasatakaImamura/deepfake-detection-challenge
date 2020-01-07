@@ -98,7 +98,7 @@ def detect_face_mtcnn(img, device):
     z = int(boxes[0][0][2])
     w = int(boxes[0][0][3])
     crop_img = img[y:w, x:z]
-    return crop_img, points, boxes
+    return crop_img
 
 
 def plot_loss(df_loss, figname):
