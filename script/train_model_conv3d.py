@@ -17,8 +17,8 @@ from utils.trainer import train_model
 # Config  ################################################################
 data_dir = '../input'
 seed = 0
-img_size = 64
-batch_size = 8
+img_size = 224
+batch_size = 4
 epoch = 10
 model_name = 'conv3D'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
