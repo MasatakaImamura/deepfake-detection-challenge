@@ -97,6 +97,8 @@ class DeepfakeDataset_continuous(Dataset):
         return img_list, label, mov_path
 
 
+# 1動画ごとに連続した画像を取得
+# frame_windowで出力するimageの間隔を指定
 def face_img_generator(mov_path, metadata, device, transform=None, phase='train', frame_window=5):
     # mov_pathからラベルを取得
     label = metadata[metadata['mov'] == mov_path.split(sep)[-1]]['label'].values[0]

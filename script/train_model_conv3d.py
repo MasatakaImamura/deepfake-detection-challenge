@@ -5,7 +5,9 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
-from utils.model_init import model_init, Conv3dnet
+from utils.model_init import model_init
+from utils.Conv3D import Conv3dnet
+
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
 from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous
@@ -29,7 +31,7 @@ img_num = 50
 frame_window = 5
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
-real_mov_num = 50
+real_mov_num = 20
 
 # Set Seed
 seed_everything(seed)

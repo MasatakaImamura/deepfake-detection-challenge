@@ -66,9 +66,9 @@ def get_img_from_mov(video_file):
     return image_list
 
 
-def detect_face(img):
+def detect_face(img, cascade_path):
     # Add Dataset "Haarcascades"
-    face_cascade = cv2.CascadeClassifier('../../haarcascade/haarcascade_frontalface_alt.xml')
+    face_cascade = cv2.CascadeClassifier(cascade_path)
     face_crops = face_cascade.detectMultiScale(img, scaleFactor=1.3, minNeighbors=5)
 
     if len(face_crops) == 0:
@@ -89,6 +89,7 @@ def detect_face_mtcnn(img, device):
     _img = img[np.newaxis, :, :, :]
     mtcnn = MTCNN(keep_all=True, device=device).eval()
     boxes, probs, points = mtcnn.detect(_img, landmarks=True)
+    # pointsは「nose, mouth_right, right_eye, left_eye, mouse_left」の(x, y)を表現したランドマーク
 
     if len(boxes) == 0:
         raise ValueError('Error!')
@@ -98,7 +99,7 @@ def detect_face_mtcnn(img, device):
     z = int(boxes[0][0][2])
     w = int(boxes[0][0][3])
     crop_img = img[y:w, x:z]
-    return crop_img
+    return crop_img, probs, points
 
 
 def plot_loss(df_loss, figname):

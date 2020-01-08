@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import cv2
+import numpy as np
+import dlib
 
 from sklearn.model_selection import train_test_split
 import datetime
@@ -8,7 +10,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
-from utils.model_init import model_init, convLSTM, convLSTM_resnet, Conv3dnet
+from utils.model_init import model_init, convLSTM, convLSTM_resnet
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov
 from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous, face_img_generator
@@ -40,39 +42,43 @@ metadata = get_metadata(data_dir)
 
 mov_path = get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=real_mov_num)
 
-# Divide Train, Vaild Data
-train_mov_path, val_mov_path = train_test_split(mov_path, test_size=0.1, random_state=seed)
 
-# Dataset
-train_dataset = DeepfakeDataset_continuous(
-    train_mov_path, metadata, device, transform=ImageTransform(img_size), phase='train')
-
-val_dataset = DeepfakeDataset_continuous(
-    val_mov_path, metadata, device, transform=ImageTransform(img_size), phase='val')
-
-# DataLoader
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-dataloader_dict = {
-    'train': train_dataloader,
-    'val': val_dataloader
-}
-
-print('DataLoader Already')
-iters = iter(train_dataloader)
-img_list, label, path = next(iters)
-
-print(img_list.size())
-
-z = torch.randn((4, 50, 3, 224, 224))
-# b, D, C, H, W -> b, C, D, H, W
-z = z.permute(0, 2, 1, 3, 4)
-
-print(z.size())
+# for i in range(len(mov_path)):
+#
+#     img = get_img_from_mov(mov_path[i])[0]
+#     try:
+#         img, prob, points = detect_face_mtcnn(img, device)
+#     except:
+#         continue
+#
+#     print(i)
+#     print(np.array(points).shape)
+#     print('')
 
 
-net = Conv3dnet()
+img = get_img_from_mov(mov_path[65])[0]
+img, probs, points = detect_face_mtcnn(img, device)
 
-out = net(z)
+import face_recognition
 
-print(out.size())
+landmark = face_recognition.face_landmarks(img)
+
+print(landmark)
+
+from PIL import Image, ImageDraw
+pil_image = Image.fromarray(img)
+d = ImageDraw.Draw(pil_image)
+
+for face_landmarks in landmark:
+
+    # Print the location of each facial feature in this image
+    for facial_feature in face_landmarks.keys():
+        print("The {} in this face has the following points: {}".format(facial_feature, face_landmarks[facial_feature]))
+
+    # Let's trace out each facial feature in the image with a line!
+    for facial_feature in face_landmarks.keys():
+        d.line(face_landmarks[facial_feature], width=3)
+
+# Show the picture
+plt.imshow(pil_image)
+plt.show()

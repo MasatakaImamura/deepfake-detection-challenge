@@ -33,7 +33,7 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
 
             for inputs, labels, _ in tqdm(dataloader_dict[phase]):
 
-                if inputs.dim() == 5:
+                if '3D' in model_name:
                     # b, D, C, H, W -> b, C, D, H, W
                     inputs = inputs.permute(0, 2, 1, 3, 4)
 

@@ -50,17 +50,19 @@ class RandomRotate:
 
 # Data Augumentation
 class ImageTransform:
-    def __init__(self, resize):
+    def __init__(self, resize, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
         self.data_transform = {
             'train': transforms.Compose([
                 Resize(resize),
                 # RandomFlip(),
                 # RandomRotate(),
                 transforms.ToTensor(),
+                transforms.Normalize(mean, std),
             ]),
             'val': transforms.Compose([
                 Resize(resize),
                 transforms.ToTensor(),
+                transforms.Normalize(mean, std),
             ])
         }
         self.size = resize
