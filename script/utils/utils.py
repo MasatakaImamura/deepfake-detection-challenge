@@ -87,7 +87,7 @@ def detect_face(img, cascade_path):
 
 def detect_face_mtcnn(img, device):
     _img = img[np.newaxis, :, :, :]
-    mtcnn = MTCNN(keep_all=True, device=device).eval()
+    mtcnn = MTCNN(keep_all=True, device=device, margin=10).eval()
     boxes, probs, points = mtcnn.detect(_img, landmarks=True)
     # pointsは「nose, mouth_right, right_eye, left_eye, mouse_left」の(x, y)を表現したランドマーク
 

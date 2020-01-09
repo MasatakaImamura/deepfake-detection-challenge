@@ -80,9 +80,10 @@ class DeepfakeDataset_continuous(Dataset):
 
         # Movie to Image
         img_list = []
+        all_image = get_img_from_mov(mov_path)
         for i in range(int(self.img_num)):
             try:
-                image = get_img_from_mov(mov_path)[int(i*self.frame_window)]  # Only First Frame Face
+                image = all_image[int(i*self.frame_window)]  # Only First Frame Face
                 # FaceCrop
                 image = detect_face_mtcnn(image, self.device)
                 # Transform
