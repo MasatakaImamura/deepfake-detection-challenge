@@ -43,6 +43,8 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
 
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = net(inputs)
+                    if outputs.dim() == 1:
+                        outputs = outputs.unsqueeze(0)
                     loss = criterion(outputs, labels.long())
 
                     if phase == 'train':

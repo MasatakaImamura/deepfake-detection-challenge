@@ -26,12 +26,12 @@ model_name = 'conv3D'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = nn.CrossEntropyLoss()
 # Image Num per 1 movie
-img_num = 50
+img_num = 20
 # frame number for extracting image from movie
-frame_window = 5
+frame_window = 10
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
-real_mov_num = 20
+real_mov_num = None
 
 # Set Seed
 seed_everything(seed)
