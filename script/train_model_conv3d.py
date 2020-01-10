@@ -15,30 +15,34 @@ from utils.trainer import train_model
 
 # Convolution3Dを使用
 # Datasetは連続した画像を出力するように設定
+# num_img=10が学習時間ギリギリのライン
+# img_sizeは特に影響は受けなさそう
 
 # Config  ################################################################
 data_dir = '../input'
 seed = 0
-img_size = 224
-batch_size = 4
+img_size = 100
+batch_size = 8
 epoch = 10
 model_name = 'conv3D'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-criterion = nn.CrossEntropyLoss()
+criterion = nn.BCEWithLogitsLoss()
 # Image Num per 1 movie
-img_num = 20
+img_num = 10
 # frame number for extracting image from movie
 frame_window = 10
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
 real_mov_num = None
+# Label_Smoothing
+label_smooth = 0.15
 
 # Set Seed
 seed_everything(seed)
 
 # Set Mov_file path  ################################################################
 metadata = get_metadata(data_dir)
-mov_path = get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=real_mov_num)
+mov_path = get_mov_path(metadata, data_dir, fake_per_real=3, real_mov_num=real_mov_num)
 
 # Preprocessing  ################################################################
 # Divide Train, Vaild Data
@@ -65,7 +69,7 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = Conv3dnet()
+net = Conv3dnet(output_size=1)
 
 # Setting Optimizer  ################################################################
 
@@ -74,7 +78,8 @@ print('Model Already')
 
 # Train  ################################################################
 net, best_loss, df_loss = train_model(net, dataloader_dict, criterion, optimizer,
-                                      num_epoch=epoch, device=device, model_name=model_name)
+                                      num_epoch=epoch, device=device, model_name=model_name,
+                                      label_smooth=label_smooth)
 
 # Save Model  ################################################################
 date = datetime.datetime.now().strftime('%Y%m%d')
