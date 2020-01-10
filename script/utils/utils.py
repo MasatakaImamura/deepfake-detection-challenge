@@ -31,24 +31,46 @@ def get_metadata(data_dir):
     return metadata
 
 
-def get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=500):
+def get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=500, train_size=0.9, seed=0):
+
+    np.random.seed(seed)
+    random.seed(seed)
     # 1Real movie 1 fake
     # real_mov_num: Number mov file for use
-    mov_path = []
+    fake_list = []
     real_list = metadata[metadata['label'] == 'REAL']['mov'].tolist()
     if real_mov_num is not None:
         real_list = random.sample(real_list, real_mov_num)
     for path in real_list:
         for i in range(fake_per_real):
             try:
-                mov_path.append(metadata[metadata['original'] == path]['mov'].tolist()[i])
+                fake_list.append(metadata[metadata['original'] == path]['mov'].tolist()[i])
             except:
                 pass
 
-    mov_path.extend(real_list)
-    mov_path = [os.path.join(data_dir, path) for path in mov_path]
+    # Train Test Split
+    train_mov_path = []
+    val_mov_path = []
+    len_val_real = int(len(real_list)*train_size)
+    len_val_fake = int(len(fake_list)*train_size)
 
-    return mov_path
+    # Shuffle List
+    real_list = random.shuffle(real_list)
+    fake_list = random.shuffle(fake_list)
+
+    train_mov_path.extend(real_list[:len_val_real])
+    train_mov_path.extend(fake_list[:len_val_fake])
+    val_mov_path.extend(real_list[len_val_real:])
+    val_mov_path.extend(fake_list[len_val_fake:])
+
+    train_mov_path = [os.path.join(data_dir, path) for path in train_mov_path]
+    val_mov_path = [os.path.join(data_dir, path) for path in val_mov_path]
+
+    # Shuffle List
+    train_mov_path = random.shuffle(train_mov_path)
+    val_mov_path = random.shuffle(val_mov_path)
+
+    return train_mov_path, val_mov_path
 
 
 def get_img_from_mov(video_file):
