@@ -8,7 +8,7 @@ import torch.nn as nn
 from utils.dfdc_dataset import face_img_generator
 
 
-def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, model_name):
+def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, model_name, label_smooth=0):
     print('')
     print('DFDC Training...')
     since = time.time()
@@ -17,6 +17,8 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
     net = net.to(device)
     train_loss_list = []
     val_loss_list = []
+
+    assert label_smooth < 0.4, 'You must set label_smooth < 0.4'
 
     for epoch in range(num_epoch):
         print('Epoch {}/{}'.format(epoch + 1, num_epoch))
@@ -39,13 +41,22 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
 
                 inputs = inputs.to(device)
                 labels = labels.to(device)
+
+                if torch.sum(labels).item() == 0:
+                    # Label = 0 の場合
+                    _labels = labels + label_smooth
+                else:
+                    # Label = 1 の場合
+                    _labels = labels - label_smooth
                 optimizer.zero_grad()
 
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = net(inputs)
-                    if outputs.dim() == 1:
-                        outputs = outputs.unsqueeze(0)
-                    loss = criterion(outputs, labels.long())
+                    # loss = criterion(outputs, labels.long())
+
+                    # outputs = torch.softmax(outputs, dim=1)[:, 1].unsqueeze(1)
+                    # outputs = torch.sigmoid(outputs)
+                    loss = criterion(outputs, _labels.unsqueeze(1))
 
                     if phase == 'train':
                         loss.backward()
@@ -57,7 +68,7 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
                     acc = torch.sum(preds == labels)
                     epoch_corrects += acc.item() / outputs.size()[0]
 
-                del inputs, labels
+                del inputs, labels, _labels
                 gc.collect()
                 torch.cuda.empty_cache()
 
