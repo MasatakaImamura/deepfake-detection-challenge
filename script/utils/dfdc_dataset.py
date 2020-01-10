@@ -51,6 +51,7 @@ class DeepfakeDataset(Dataset):
 
 # 1動画ごとの連続画像を生成
 # img_numで画像の最大枚数  frame_windowで動画の間隔を指定
+# Output: (img_num, channels=3, img_size, img_size)
 class DeepfakeDataset_continuous(Dataset):
     def __init__(self, file_list, metadata, device, transform=None, phase='train',
                  img_num=20, img_size=224, frame_window=10):
@@ -86,6 +87,8 @@ class DeepfakeDataset_continuous(Dataset):
                 image = all_image[int(i*self.frame_window)]  # Only First Frame Face
                 # FaceCrop
                 image = detect_face_mtcnn(image, self.device)
+                if image is None:
+                    continue
                 # Transform
                 image = self.transform(image, self.phase)
                 img_list.append(image)
