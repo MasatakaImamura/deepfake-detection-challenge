@@ -55,8 +55,8 @@ def get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=500, train_si
     len_val_fake = int(len(fake_list)*train_size)
 
     # Shuffle List
-    real_list = random.shuffle(real_list)
-    fake_list = random.shuffle(fake_list)
+    real_list = random.sample(real_list, len(real_list))
+    fake_list = random.sample(fake_list, len(fake_list))
 
     train_mov_path.extend(real_list[:len_val_real])
     train_mov_path.extend(fake_list[:len_val_fake])
@@ -67,8 +67,8 @@ def get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=500, train_si
     val_mov_path = [os.path.join(data_dir, path) for path in val_mov_path]
 
     # Shuffle List
-    train_mov_path = random.shuffle(train_mov_path)
-    val_mov_path = random.shuffle(val_mov_path)
+    train_mov_path = random.sample(train_mov_path, len(train_mov_path))
+    val_mov_path = random.sample(val_mov_path, len(val_mov_path))
 
     return train_mov_path, val_mov_path
 

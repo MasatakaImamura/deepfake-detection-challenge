@@ -42,16 +42,16 @@ seed_everything(seed)
 # Set Mov_file path  ################################################################
 
 
-metadata = get_metadata(data_dir)
-mov_path = get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=real_mov_num)
+# metadata = get_metadata(data_dir)
+# mov_path = get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=real_mov_num)
 
-imgs = get_img_from_mov(mov_path[0])
-img, prob, point = detect_face_mtcnn(imgs[0], device)
-
-print(prob)
-print(prob[0][0])
-plt.imshow(img)
-plt.show()
+# imgs = get_img_from_mov(mov_path[0])
+# img, prob, point = detect_face_mtcnn(imgs[0], device)
+#
+# print(prob)
+# print(prob[0][0])
+# plt.imshow(img)
+# plt.show()
 
 # z = torch.randn(8, 3, 256, 256)
 #
@@ -59,3 +59,6 @@ plt.show()
 #
 # out = net(z)
 # print(out.size())
+
+z = torch.randn(4)
+print(z)

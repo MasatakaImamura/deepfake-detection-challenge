@@ -52,10 +52,6 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
 
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = net(inputs)
-                    # loss = criterion(outputs, labels.long())
-
-                    # outputs = torch.softmax(outputs, dim=1)[:, 1].unsqueeze(1)
-                    # outputs = torch.sigmoid(outputs)
                     loss = criterion(outputs, _labels.unsqueeze(1))
 
                     if phase == 'train':
@@ -64,6 +60,7 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
 
                     epoch_loss += loss.item()
                     # Accuracy
+                    outputs = torch.sigmoid(outputs)
                     _, preds = torch.max(outputs, 1)
                     acc = torch.sum(preds == labels)
                     epoch_corrects += acc.item() / outputs.size()[0]

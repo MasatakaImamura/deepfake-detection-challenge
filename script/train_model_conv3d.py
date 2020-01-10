@@ -45,6 +45,9 @@ metadata = get_metadata(data_dir)
 train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=3,
                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
 
+
+print(train_mov_path)
+
 # Preprocessing  ################################################################
 # Dataset
 train_dataset = DeepfakeDataset_continuous(
