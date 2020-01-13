@@ -9,7 +9,7 @@ from utils.model_init import model_init
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
 from utils.dfdc_dataset import DeepfakeDataset
-from utils.trainer import train_model, train_model_2
+from utils.trainer import train_model
 
 
 # 1枚の画像のみをピックアップして学習する
@@ -19,25 +19,25 @@ data_dir = '../input'
 seed = 0
 img_size = 224
 batch_size = 64
-epoch = 30
-model_name = 'efficientnet-b7'
+epoch = 20
+model_name = 'resnet152'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = nn.CrossEntropyLoss()
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
 real_mov_num = None
+# Label_Smoothing
+label_smooth = 0
 
 # Set Seed
 seed_everything(seed)
 
 # Set Mov_file path  ################################################################
 metadata = get_metadata(data_dir)
-mov_path = get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=real_mov_num)
+train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
+                                            real_mov_num=real_mov_num, train_size=0.9, seed=seed)
 
 # Preprocessing  ################################################################
-# Divide Train, Vaild Data
-train_mov_path, val_mov_path = train_test_split(mov_path, test_size=0.1, random_state=seed)
-
 # Dataset
 train_dataset = DeepfakeDataset(
     train_mov_path, metadata, device, transform=ImageTransform(img_size), phase='train', getting_idx=0)
@@ -58,15 +58,13 @@ print('DataLoader Already')
 # Model  ################################################################
 torch.cuda.empty_cache()
 net = model_init(model_name, classes=2)
-# net = convLSTM(out_classes=2)
-# net = convLSTM_resnet()
 
 # Transfer Learning  ################################################################
 # Specify The Layers for updating
 # Resnet: fc.weight, fc.bias
 # Efficientnet: _fc.weight, _fc.bias
 params_to_update = []
-update_params_name = ['_fc.weight', '_fc.bias']
+update_params_name = ['fc.weight', 'fc.bias']
 
 for name, param in net.named_parameters():
     if name in update_params_name:
@@ -80,7 +78,8 @@ print('Model Already')
 
 # Train  ################################################################
 net, best_loss, df_loss = train_model(net, dataloader_dict, criterion, optimizer,
-                                      num_epoch=epoch, device=device, model_name=model_name)
+                                      num_epoch=epoch, device=device, model_name=model_name,
+                                      label_smooth=label_smooth)
 
 # Save Model  ################################################################
 date = datetime.datetime.now().strftime('%Y%m%d')

@@ -116,9 +116,6 @@ def detect_face_mtcnn(img, device):
     if len(boxes) == 0:
         raise ValueError('Error!')
 
-    if probs[0][0] < 0.9:
-        return None
-
     x = int(boxes[0][0][0])
     y = int(boxes[0][0][1])
     z = int(boxes[0][0][2])

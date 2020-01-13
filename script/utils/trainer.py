@@ -52,17 +52,19 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
 
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = net(inputs)
-                    loss = criterion(outputs, _labels.unsqueeze(1))
+                    loss = criterion(outputs, _labels.long())
 
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
 
-                    epoch_loss += loss.item()
+                    epoch_loss += loss.item() * inputs.size(0)
                     # Accuracy
                     outputs = torch.sigmoid(outputs)
-                    _, preds = torch.max(outputs, 1)
-                    acc = torch.sum(preds == labels)
+                    outputs = torch.softmax(outputs, dim=1)[:, 1]
+                    outputs[outputs > 0.5] = 1
+                    outputs[outputs < 0.5] = 0
+                    acc = torch.sum(outputs == labels)
                     epoch_corrects += acc.item() / outputs.size()[0]
 
                 del inputs, labels, _labels
@@ -87,7 +89,6 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
                 best_model_wts = copy.deepcopy(net.state_dict())
                 torch.save(net.state_dict(), "../model/temp_{}.pth".format(model_name))
 
-        # Loss Save
         df_loss = pd.DataFrame({
             'Train_loss': train_loss_list,
             'Val_loss': val_loss_list

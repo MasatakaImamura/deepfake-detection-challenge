@@ -87,8 +87,6 @@ class DeepfakeDataset_continuous(Dataset):
                 image = all_image[int(i*self.frame_window)]  # Only First Frame Face
                 # FaceCrop
                 image = detect_face_mtcnn(image, self.device)
-                if image is None:
-                    continue
                 # Transform
                 image = self.transform(image, self.phase)
                 img_list.append(image)

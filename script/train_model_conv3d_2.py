@@ -5,44 +5,47 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
-from utils.model_init import model_init, convLSTM, convLSTM_resnet
+from utils.model_init import model_init
+from utils.Conv3D import Conv3dnet
+
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
 from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous
 from utils.trainer import train_model
 
-# ConvolutionLSTMを使用
+# Convolution3Dを使用
 # Datasetは連続した画像を出力するように設定
-
+# num_img=10が学習時間ギリギリのライン
+# img_sizeは特に影響は受けなさそう
 
 # Config  ################################################################
 data_dir = '../input'
 seed = 0
-img_size = 64
+img_size = 100
 batch_size = 8
 epoch = 10
-model_name = 'convLSTM'
+model_name = 'conv3D_rmsprop'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-criterion = nn.CrossEntropyLoss()
+criterion = nn.BCEWithLogitsLoss()
 # Image Num per 1 movie
-img_num = 20
+img_num = 10
 # frame number for extracting image from movie
 frame_window = 10
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
-real_mov_num = 50
+real_mov_num = None
+# Label_Smoothing
+label_smooth = 0.15
 
 # Set Seed
 seed_everything(seed)
 
 # Set Mov_file path  ################################################################
 metadata = get_metadata(data_dir)
-mov_path = get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=real_mov_num)
+train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
+                                            real_mov_num=real_mov_num, train_size=0.9, seed=seed)
 
 # Preprocessing  ################################################################
-# Divide Train, Vaild Data
-train_mov_path, val_mov_path = train_test_split(mov_path, test_size=0.1, random_state=seed)
-
 # Dataset
 train_dataset = DeepfakeDataset_continuous(
     train_mov_path, metadata, device, transform=ImageTransform(img_size),
@@ -64,26 +67,17 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = convLSTM(input_size=img_size, lstm_hidden_dim=10, lstm_num_layer=1, out_classes=2)
+net = Conv3dnet(output_size=1)
 
 # Setting Optimizer  ################################################################
-# Specify The Layers for updating
-# params_to_update = []
-# update_params_name = ['_fc.weight', '_fc.bias']
-#
-# for name, param in net.named_parameters():
-#     if name in update_params_name:
-#         param.requires_grad = True
-#         params_to_update.append(param)
-#     else:
-#         param.requires_grad = False
 
-optimizer = optim.Adam(params=net.parameters())
+optimizer = optim.RMSprop(params=net.parameters())
 print('Model Already')
 
 # Train  ################################################################
 net, best_loss, df_loss = train_model(net, dataloader_dict, criterion, optimizer,
-                                      num_epoch=epoch, device=device, model_name=model_name)
+                                      num_epoch=epoch, device=device, model_name=model_name,
+                                      label_smooth=label_smooth)
 
 # Save Model  ################################################################
 date = datetime.datetime.now().strftime('%Y%m%d')

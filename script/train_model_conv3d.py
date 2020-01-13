@@ -26,7 +26,7 @@ batch_size = 8
 epoch = 10
 model_name = 'conv3D'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-criterion = nn.BCEWithLogitsLoss()
+criterion = nn.CrossEntropyLoss()
 # Image Num per 1 movie
 img_num = 10
 # frame number for extracting image from movie
@@ -35,18 +35,15 @@ frame_window = 10
 # If set "None", all real movies are used
 real_mov_num = None
 # Label_Smoothing
-label_smooth = 0.15
+label_smooth = 0
 
 # Set Seed
 seed_everything(seed)
 
 # Set Mov_file path  ################################################################
 metadata = get_metadata(data_dir)
-train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=3,
+train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
-
-
-print(train_mov_path)
 
 # Preprocessing  ################################################################
 # Dataset
@@ -70,11 +67,10 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = Conv3dnet(output_size=1)
+net = Conv3dnet(output_size=2)
 
 # Setting Optimizer  ################################################################
-
-optimizer = optim.Adam(params=net.parameters())
+optimizer = optim.Adam(params=net.parameters(), lr=0.01)
 print('Model Already')
 
 # Train  ################################################################
