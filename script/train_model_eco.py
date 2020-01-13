@@ -21,7 +21,7 @@ from utils.eco import ECO_2D, ECO_3D
 data_dir = '../input'
 seed = 0
 img_size = 224
-batch_size = 8
+batch_size = 4
 epoch = 20
 model_name = 'eco'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -67,11 +67,11 @@ torch.cuda.empty_cache()
 
 
 class ECO_Lite(nn.Module):
-    def __init__(self):
+    def __init__(self, output_size=2):
         super(ECO_Lite, self).__init__()
         self.eco_2d = ECO_2D()
         self.eco_3d = ECO_3D()
-        self.fc_final = nn.Linear(in_features=512, out_features=2, bias=True)
+        self.fc_final = nn.Linear(in_features=512, out_features=output_size, bias=True)
 
     def forward(self, x):
         bs, ns, c, h, w = x.shape
