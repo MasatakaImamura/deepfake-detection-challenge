@@ -18,6 +18,10 @@ from utils.trainer import train_model
 # num_img=10が学習時間ギリギリのライン
 # img_sizeは特に影響は受けなさそう
 
+# 学習がうまく行かない。。。
+# Epoch 1  val Loss: 0.9664 Acc: 0.0615
+# Epoch 2  val Loss: 1.3283 Acc: 0.0590
+
 # Config  ################################################################
 data_dir = '../input'
 seed = 0

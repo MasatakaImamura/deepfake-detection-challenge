@@ -6,36 +6,28 @@ from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
 from utils.model_init import model_init
-from utils.Conv3D import Conv3dnet
-
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
-from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous
+from utils.dfdc_dataset import DeepfakeDataset
 from utils.trainer import train_model
 
-# Convolution3Dを使用
-# Datasetは連続した画像を出力するように設定
-# num_img=10が学習時間ギリギリのライン
-# img_sizeは特に影響は受けなさそう
+
+# 1枚の画像のみをピックアップして学習する
 
 # Config  ################################################################
 data_dir = '../input'
 seed = 0
-img_size = 100
-batch_size = 8
-epoch = 10
-model_name = 'conv3D_rmsprop'
+img_size = 224
+batch_size = 64
+epoch = 20
+model_name = 'efficientnet-b4'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-criterion = nn.BCEWithLogitsLoss()
-# Image Num per 1 movie
-img_num = 10
-# frame number for extracting image from movie
-frame_window = 10
+criterion = nn.CrossEntropyLoss()
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
 real_mov_num = None
 # Label_Smoothing
-label_smooth = 0.15
+label_smooth = 0
 
 # Set Seed
 seed_everything(seed)
@@ -47,13 +39,11 @@ train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
 
 # Preprocessing  ################################################################
 # Dataset
-train_dataset = DeepfakeDataset_continuous(
-    train_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='train', img_size=img_size, img_num=img_num, frame_window=frame_window)
+train_dataset = DeepfakeDataset(
+    train_mov_path, metadata, device, transform=ImageTransform(img_size), phase='train', getting_idx=0)
 
-val_dataset = DeepfakeDataset_continuous(
-    val_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='val', img_size=img_size, img_num=img_num, frame_window=frame_window)
+val_dataset = DeepfakeDataset(
+    val_mov_path, metadata, device, transform=ImageTransform(img_size), phase='val', getting_idx=0)
 
 # DataLoader
 train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -67,11 +57,23 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = Conv3dnet(output_size=1)
+net = model_init(model_name, classes=2)
 
-# Setting Optimizer  ################################################################
+# Transfer Learning  ################################################################
+# Specify The Layers for updating
+# Resnet: fc.weight, fc.bias
+# Efficientnet: _fc.weight, _fc.bias
+params_to_update = []
+update_params_name = ['_fc.weight', '_fc.bias']
 
-optimizer = optim.RMSprop(params=net.parameters())
+for name, param in net.named_parameters():
+    if name in update_params_name:
+        param.requires_grad = True
+        params_to_update.append(param)
+    else:
+        param.requires_grad = False
+
+optimizer = optim.Adam(params=params_to_update)
 print('Model Already')
 
 # Train  ################################################################
