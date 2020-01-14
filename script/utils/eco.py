@@ -455,3 +455,23 @@ class ECO_3D(nn.Module):
         out = out.view(out.size()[0], out.size()[1])
 
         return out
+
+
+class ECO_Lite(nn.Module):
+    def __init__(self, output_size=2):
+        super(ECO_Lite, self).__init__()
+        self.eco_2d = ECO_2D()
+        self.eco_3d = ECO_3D()
+        self.fc_final = nn.Linear(in_features=512, out_features=output_size, bias=True)
+
+    def forward(self, x):
+        bs, ns, c, h, w = x.shape
+        out = x.view(-1, c, h, w)
+
+        out = self.eco_2d(out)
+        out = out.view(-1, ns, 96, 28, 28)
+
+        out = self.eco_3d(out)
+        out = self.fc_final(out)
+
+        return out

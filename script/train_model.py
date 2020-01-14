@@ -10,7 +10,6 @@ from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
 from utils.dfdc_dataset import DeepfakeDataset
 from utils.trainer import train_model
-
 from utils.logger import create_logger, get_logger
 
 
