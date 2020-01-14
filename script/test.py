@@ -20,6 +20,8 @@ from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous, face
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from utils.mesonet import Mesonet
 
+from utils.logger import create_logger, get_logger
+
 
 # Config  ################################################################
 data_dir = '../input'
@@ -36,29 +38,16 @@ img_num = 5
 frame_window = 5
 real_mov_num = None
 
+
+net = model_init(model_name)
+
 # Set Seed
 seed_everything(seed)
 
 # Set Mov_file path  ################################################################
 
+version = '001'
 
-# metadata = get_metadata(data_dir)
-# mov_path = get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=real_mov_num)
+create_logger(version)
 
-# imgs = get_img_from_mov(mov_path[0])
-# img, prob, point = detect_face_mtcnn(imgs[0], device)
-#
-# print(prob)
-# print(prob[0][0])
-# plt.imshow(img)
-# plt.show()
-
-# z = torch.randn(8, 3, 256, 256)
-#
-# net = Mesonet()
-#
-# out = net(z)
-# print(out.size())
-
-z = torch.randn(4)
-print(z)
+get_logger(version)

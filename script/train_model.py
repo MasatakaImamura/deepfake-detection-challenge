@@ -11,6 +11,8 @@ from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
 from utils.dfdc_dataset import DeepfakeDataset
 from utils.trainer import train_model
 
+from utils.logger import create_logger, get_logger
+
 
 # 1枚の画像のみをピックアップして学習する
 
@@ -20,6 +22,7 @@ seed = 0
 img_size = 224
 batch_size = 64
 epoch = 20
+lr = 0.001
 model_name = 'resnet152'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = nn.CrossEntropyLoss()
@@ -28,6 +31,8 @@ criterion = nn.CrossEntropyLoss()
 real_mov_num = None
 # Label_Smoothing
 label_smooth = 0
+# Version of Logging
+version = model_name + '_000'
 
 # Set Seed
 seed_everything(seed)
@@ -73,13 +78,24 @@ for name, param in net.named_parameters():
     else:
         param.requires_grad = False
 
-optimizer = optim.Adam(params=params_to_update)
+optimizer = optim.Adam(params=params_to_update, lr=lr)
 print('Model Already')
+
+# logging  ################################################################
+create_logger(version)
+get_logger(version).info('------- Config ------')
+get_logger(version).info(f'Random Seed: {seed}')
+get_logger(version).info(f'Batch Size: {batch_size}')
+get_logger(version).info(f'Loss: {criterion.__class__.__name__}')
+get_logger(version).info(f'Optimizer: {optimizer.__class__.__name__}')
+get_logger(version).info(f'Learning Rate: {lr}')
+get_logger(version).info(f'Update Params: {update_params_name}')
+get_logger(version).info('------- Train Start ------')
 
 # Train  ################################################################
 net, best_loss, df_loss = train_model(net, dataloader_dict, criterion, optimizer,
                                       num_epoch=epoch, device=device, model_name=model_name,
-                                      label_smooth=label_smooth)
+                                      label_smooth=label_smooth, version=version)
 
 # Save Model  ################################################################
 date = datetime.datetime.now().strftime('%Y%m%d')

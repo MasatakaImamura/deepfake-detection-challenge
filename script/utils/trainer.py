@@ -7,8 +7,11 @@ import torch.nn as nn
 
 from utils.dfdc_dataset import face_img_generator
 
+from utils.logger import create_logger, get_logger
 
-def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, model_name, label_smooth=0):
+
+def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, model_name, label_smooth=0,
+                version='000'):
     print('')
     print('DFDC Training...')
     since = time.time()
@@ -74,8 +77,9 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
             epoch_loss = epoch_loss / len(dataloader_dict[phase].dataset)
             epoch_acc = epoch_corrects / len(dataloader_dict[phase].dataset)
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
-            print('')
+            get_logger(version).info(
+                f'Epoch {epoch + 1}/{num_epoch} {phase} Loss: {epoch_loss} Acc: {epoch_acc}'
+            )
 
             # Save Epoch Loss
             if phase == 'train':

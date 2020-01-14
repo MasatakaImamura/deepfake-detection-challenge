@@ -1,0 +1,8 @@
+[INFO] ------- Config ------ 	(2020-01-14 11:16:10,564)
+[INFO] Random Seed: 0 	(2020-01-14 11:16:10,564)
+[INFO] Batch Size: 64 	(2020-01-14 11:16:10,564)
+[INFO] Loss: CrossEntropyLoss 	(2020-01-14 11:16:10,564)
+[INFO] Optimizer: Adam 	(2020-01-14 11:16:10,564)
+[INFO] Learning Rate: 0.001 	(2020-01-14 11:16:10,564)
+[INFO] Update Params: ['fc.weight', 'fc.bias'] 	(2020-01-14 11:16:10,564)
+[INFO] ------- Train Start ------ 	(2020-01-14 11:16:10,564)
