@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
-import dlib
 import time
 
 from sklearn.model_selection import train_test_split
@@ -38,19 +37,21 @@ img_num = 5
 frame_window = 5
 real_mov_num = None
 
-
-net = model_init(model_name)
-
 # Set Seed
 seed_everything(seed)
 
 # Set Mov_file path  ################################################################
+metadata = get_metadata(data_dir)
+train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
+                                            real_mov_num=real_mov_num, train_size=0.9, seed=seed)
 
-version = '001'
+imgs = get_img_from_mov(train_mov_path[0])[0]
 
-create_logger(version)
+print(imgs.shape)
 
-get_logger(version)
+mtcnn = MTCNN(keep_all=False, device=device, margin=0).eval()
 
+faces = mtcnn(imgs[np.newaxis, :, :, :])
 
+print(faces.shape)
 

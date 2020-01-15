@@ -63,7 +63,6 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
 
                     epoch_loss += loss.item() * inputs.size(0)
                     # Accuracy
-                    outputs = torch.sigmoid(outputs)
                     outputs = torch.softmax(outputs, dim=1)[:, 1]
                     outputs[outputs > 0.5] = 1
                     outputs[outputs < 0.5] = 0
