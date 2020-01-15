@@ -9,6 +9,7 @@ if os.name == 'nt':
 elif os.name == 'posix':
     sep = '/'
 
+
 # 動画から1枚だけの画像を出力する
 # getting_idxで動画のフレームから任意の位置の画像をピックアップする
 class DeepfakeDataset(Dataset):
