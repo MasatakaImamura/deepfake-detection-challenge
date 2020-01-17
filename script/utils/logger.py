@@ -9,7 +9,7 @@ def create_logger(exp_version):
     logger_.setLevel(DEBUG)
 
     # formatter
-    fmr = Formatter("[%(levelname)s] %(message)s \t(%(asctime)s)")
+    fmr = Formatter("%(message)s \t(%(asctime)s)")
 
     # file handler
     fh = FileHandler(log_file)

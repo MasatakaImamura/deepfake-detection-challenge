@@ -44,26 +44,25 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
 
                 inputs = inputs.to(device)
                 labels = labels.to(device)
-
-                if torch.sum(labels).item() == 0:
-                    # Label = 0 の場合
-                    _labels = labels + label_smooth
-                else:
-                    # Label = 1 の場合
-                    _labels = labels - label_smooth
                 optimizer.zero_grad()
+
+                # LossがBCEの場合有効にする
+                _labels = labels.unsqueeze(1).float()
 
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = net(inputs)
-                    loss = criterion(outputs, _labels.long())
+                    loss = criterion(outputs, _labels)
 
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
 
-                    epoch_loss += loss.item() * inputs.size(0)
+                    epoch_loss += loss.item()
                     # Accuracy
-                    outputs = torch.softmax(outputs, dim=1)[:, 1]
+                    # Output_size = 1
+                    outputs = torch.sigmoid(outputs)
+                    # Output_size = 2
+                    # outputs = torch.softmax(outputs, dim=1)[:, 1]
                     outputs[outputs > 0.5] = 1
                     outputs[outputs < 0.5] = 0
                     acc = torch.sum(outputs == labels)
@@ -112,7 +111,6 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
     # load best model weights
     net.load_state_dict(best_model_wts)
     return net, best_loss, df_loss
-
 
 # For Continuous
 def train_model_by_generator(net, metadata, train_mov_path, transform, val_mov_path, criterion, optimizer,

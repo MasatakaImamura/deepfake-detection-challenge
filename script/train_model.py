@@ -24,7 +24,6 @@ epoch = 20
 lr = 0.001
 model_name = 'resnet152'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-criterion = nn.CrossEntropyLoss()
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
 real_mov_num = None
@@ -40,6 +39,9 @@ seed_everything(seed)
 metadata = get_metadata(data_dir)
 train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
+
+# Loss Function  ################################################################
+criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
 # Preprocessing  ################################################################
 # Dataset
@@ -61,7 +63,7 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = model_init(model_name, classes=2)
+net = model_init(model_name, classes=1)
 
 # Transfer Learning  ################################################################
 # Specify The Layers for updating
@@ -77,6 +79,7 @@ for name, param in net.named_parameters():
     else:
         param.requires_grad = False
 
+# Setting Optimizer  ################################################################
 optimizer = optim.Adam(params=params_to_update, lr=lr)
 print('Model Already')
 

@@ -88,6 +88,24 @@ def get_img_from_mov(video_file):
     return image_list
 
 
+def get_img_from_mov_2(video_file, num_img, frame_window):
+    # https://note.nkmk.me/python-opencv-videocapture-file-camera/
+    cap = cv2.VideoCapture(video_file)
+    frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    image_list = []
+    for i in range(num_img):
+        _, image = cap.read()
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image_list.append(image)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, (i + 1) * frame_window)
+        if cap.get(cv2.CAP_PROP_POS_FRAMES) >= frames:
+            break
+    cap.release()
+
+    return image_list
+
+
 def detect_face(img, cascade_path):
     # Add Dataset "Haarcascades"
     face_cascade = cv2.CascadeClassifier(cascade_path)

@@ -10,10 +10,11 @@ from utils.Conv3D import Conv3dnet
 
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
-from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous
+from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous_faster
 from utils.trainer import train_model
 from utils.eco import ECO_Lite
 from utils.logger import create_logger, get_logger
+from facenet_pytorch import InceptionResnetV1, MTCNN
 
 # Convolution3Dを使用
 # Datasetは連続した画像を出力するように設定
@@ -27,7 +28,6 @@ epoch = 20
 lr = 0.001
 model_name = 'eco'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-criterion = nn.CrossEntropyLoss()
 # Image Num per 1 movie
 img_num = 16
 # frame number for extracting image from movie
@@ -40,6 +40,9 @@ label_smooth = 0
 # Version of Logging
 version = model_name + '_000'
 
+# Face Detector
+detector = MTCNN(image_size=img_size, margin=14, keep_all=True, factor=0.5, device=device).eval()
+
 # Set Seed
 seed_everything(seed)
 
@@ -48,15 +51,18 @@ metadata = get_metadata(data_dir)
 train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
 
+# Loss Function  ################################################################
+criterion = nn.BCEWithLogitsLoss(reduction='sum')
+
 # Preprocessing  ################################################################
 # Dataset
-train_dataset = DeepfakeDataset_continuous(
-    train_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='train', img_size=img_size, img_num=img_num, frame_window=frame_window)
+train_dataset = DeepfakeDataset_continuous_faster(
+    train_mov_path, metadata, device, detector, img_num, img_size, frame_window
+)
 
-val_dataset = DeepfakeDataset_continuous(
-    val_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='val', img_size=img_size, img_num=img_num, frame_window=frame_window)
+val_dataset = DeepfakeDataset_continuous_faster(
+    val_mov_path, metadata, device, detector, img_num, img_size, frame_window
+)
 
 # DataLoader
 train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -65,12 +71,13 @@ dataloader_dict = {
     'train': train_dataloader,
     'val': val_dataloader
 }
+# Output Shape -> (batch_size, img_num, channel=3, img_size, img_size)
 
 print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = ECO_Lite(output_size=2)
+net = ECO_Lite(output_size=1)
 
 # Setting Optimizer  ################################################################
 optimizer = optim.Adam(params=net.parameters())
