@@ -13,11 +13,11 @@ import torch.optim as optim
 from utils.model_init import model_init, convLSTM, convLSTM_resnet
 from utils.Conv3D import Conv3dnet
 from utils.data_augumentation import ImageTransform
-from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov
-from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous, face_img_generator, DeepfakeDataset_continuous_2
+from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov_2
+from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_3d, face_img_generator, DeepfakeDataset_3d_faster
 # from utils.trainer import train_model
 from facenet_pytorch import InceptionResnetV1, MTCNN
-from utils.mesonet import Mesonet
+from utils.mesonet import Meso4, MesoInception4
 
 from utils.logger import create_logger, get_logger
 
@@ -26,13 +26,11 @@ from utils.logger import create_logger, get_logger
 data_dir = '../input'
 seed = 0
 img_size = 224
-batch_size = 16
+batch_size = 4
 epoch = 8
-model_name = 'resnet50'
+model_name = 'resnet152'
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 device = 'cpu'
-# criterion = nn.CrossEntropyLoss()
-criterion = nn.BCEWithLogitsLoss()
 img_num = 10
 frame_window = 5
 real_mov_num = None
@@ -51,44 +49,47 @@ train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
 criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
 # Preprocessing  ################################################################
-# Dataset
-train_dataset = DeepfakeDataset_continuous(
-    train_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='train', img_size=img_size, img_num=img_num, frame_window=frame_window)
 
-# DataLoader
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+gen = DeepfakeDataset_3d_faster(train_mov_path, metadata, device, detector, img_num=20, img_size=224, frame_window=10)
+
+img_list = get_img_from_mov_2(train_mov_path[0], img_num, frame_window)
 
 
-train_dataset_2 = DeepfakeDataset_continuous_2(
-    train_mov_path, metadata, device, detector, img_num=img_num, img_size=img_size, frame_window=frame_window)
+imgss = []
+from PIL import Image
 
-train_dataloader_2 = DataLoader(train_dataset_2, batch_size=batch_size, shuffle=True)
+# for i in range(3):
+#     plt.imshow(img_list[i])
+#     plt.show()
+#
+#     img = detector(Image.fromarray(img_list[i]))
+#
+#     # plt.imshow(img)
+#     # plt.show()
+#
+#     # img = ImageTransform(img_size)(img, 'train')
+#
+#     img = img /2 + 0.5
+#     print(img.size())
+#
+#     for i in range(img.size(0)):
+#         plt.imshow(img[i, :, :, :].permute(1, 2, 0).numpy())
+#         plt.show()
+#
+#     imgss.append(img)
+#
+# print(imgss)
+# print(torch.stack(imgss).size())
 
-print('DataLoader Already')
+img, label, path = gen.__getitem__(0)
 
+print(img.size())
+print(label)
+print(path)
 
-# Test
-
-
-since = time.time()
-
-iters = iter(train_dataloader)
-
-img_list, label, mov_path = next(iters)
-
-elapsedtime = time.time() - since
-
-print(img_list.size())
-print(elapsedtime)
-
-since = time.time()
-
-iters = iter(train_dataloader_2)
-
-img_list, label, mov_path = next(iters)
-
-elapsedtime = time.time() - since
-
-print(img_list.size())
-print(elapsedtime)
+for i in range(5):
+    print(img[i].size())
+    print(torch.sum(img[i]))
+    print(img[i])
+    plt.imshow(img[i].permute(1, 2, 0).numpy())
+    plt.show()

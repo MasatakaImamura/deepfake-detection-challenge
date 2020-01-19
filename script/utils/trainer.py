@@ -21,6 +21,8 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
     train_loss_list = []
     val_loss_list = []
 
+    torch.backends.cudnn.benchmark = True
+
     assert label_smooth < 0.4, 'You must set label_smooth < 0.4'
 
     for epoch in range(num_epoch):

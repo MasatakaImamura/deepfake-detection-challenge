@@ -10,7 +10,7 @@ from utils.Conv3D import Conv3dnet
 
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
-from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous_faster
+from utils.dfdc_dataset import DeepfakeDataset_3d, DeepfakeDataset_3d_faster
 from utils.trainer import train_model
 from utils.eco import ECO_Lite
 from utils.logger import create_logger, get_logger
@@ -56,11 +56,11 @@ criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
 # Preprocessing  ################################################################
 # Dataset
-train_dataset = DeepfakeDataset_continuous_faster(
+train_dataset = DeepfakeDataset_3d_faster(
     train_mov_path, metadata, device, detector, img_num, img_size, frame_window
 )
 
-val_dataset = DeepfakeDataset_continuous_faster(
+val_dataset = DeepfakeDataset_3d_faster(
     val_mov_path, metadata, device, detector, img_num, img_size, frame_window
 )
 

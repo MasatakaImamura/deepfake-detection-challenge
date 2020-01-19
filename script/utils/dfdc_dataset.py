@@ -13,6 +13,7 @@ elif os.name == 'posix':
 
 # 動画から1枚だけの画像を出力する
 # getting_idxで動画のフレームから任意の位置の画像をピックアップする
+# Output Shape -> (channel=3, img_size, img_size)
 class DeepfakeDataset(Dataset):
     def __init__(self, file_list, metadata, device, transform=None, phase='train', getting_idx=0):
         self.file_list = file_list
@@ -51,10 +52,55 @@ class DeepfakeDataset(Dataset):
         return image, label, mov_path
 
 
+# 動画から1枚だけの画像を出力する
+# getting_idxで動画のフレームから任意の位置の画像をピックアップする
+# Output Shape -> (channel=3, img_size, img_size)
+class DeepfakeDataset_faster(Dataset):
+    def __init__(self, file_list, metadata, device, detector, img_size, getting_idx=0):
+        self.file_list = file_list
+        self.metadata = metadata
+        self.device = device
+        self.detector = detector
+        self.img_size = img_size
+        self.getting_idx = getting_idx
+
+    def __len__(self):
+        return len(self.file_list)
+
+    def __getitem__(self, idx):
+
+        mov_path = self.file_list[idx]
+
+        # Label
+        label = self.metadata[self.metadata['mov'] == mov_path.split(sep)[-1]]['label'].values
+
+        if label == 'FAKE':
+            label = 1
+        else:
+            label = 0
+
+        # Movie to Image
+        try:
+            image = get_img_from_mov(mov_path)[self.getting_idx]  # Specified Frame Only
+            # FaceCrop
+            face = self.detector(Image.fromarray(image))
+            # 検出できなかった場合
+            if face is None:
+                face = torch.randn(3, self.img_size, self.img_size)
+            # 最初の画像のみ使用
+            face = face[0, :, :, :]
+
+        except:
+            face = torch.randn((3, self.img_size, self.img_size), dtype=torch.float)
+            label = 0.5
+
+        return face, label, mov_path
+
+
 # 1動画ごとの連続画像を生成
 # img_numで画像の最大枚数  frame_windowで動画の間隔を指定
 # Output: (img_num, channels=3, img_size, img_size)
-class DeepfakeDataset_continuous(Dataset):
+class DeepfakeDataset_3d(Dataset):
     def __init__(self, file_list, metadata, device, transform=None, phase='train',
                  img_num=20, img_size=224, frame_window=10):
         self.file_list = file_list
@@ -83,10 +129,10 @@ class DeepfakeDataset_continuous(Dataset):
 
         # Movie to Image
         img_list = []
-        all_image = get_img_from_mov(mov_path)
-        for i in range(int(self.img_num)):
+        all_image = get_img_from_mov_2(mov_path, self.img_num, self.frame_window)
+        for i in range(len(all_image)):
             try:
-                image = all_image[int(i*self.frame_window)]  # Only First Frame Face
+                image = all_image[i]  # Only First Frame Face
                 # FaceCrop
                 image = detect_face_mtcnn(image, self.device)
                 # Transform
@@ -103,7 +149,7 @@ class DeepfakeDataset_continuous(Dataset):
 
 # detectorを指定する
 # こちらの方が高速
-class DeepfakeDataset_continuous_faster(Dataset):
+class DeepfakeDataset_3d_faster(Dataset):
     def __init__(self, file_list, metadata, device, detector, img_num=20, img_size=224, frame_window=10):
         self.file_list = file_list
         self.metadata = metadata
@@ -140,18 +186,16 @@ class DeepfakeDataset_continuous_faster(Dataset):
                 if face is None:
                     face = torch.randn(1, 3, self.img_size, self.img_size)
                 # 最初の画像のみ使用
-                face = face[0, :, :, :].unsqueeze(0)
+                face = face[0, :, :, :]
 
-                # Mormalize
-                face = (face - face.mean()) / face.std()
+                # Unnormalize
+                face = face / 2 + 0.5
             except:
                 face = torch.randn(3, self.img_size, self.img_size)
 
             img_list.append(face)
 
         img_list = torch.stack(img_list)
-
-        img_list = img_list.squeeze()
 
         return img_list, label, mov_path
 

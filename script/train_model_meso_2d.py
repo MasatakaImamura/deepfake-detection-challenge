@@ -6,58 +6,56 @@ from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
 from utils.model_init import model_init
-from utils.Conv3D import Conv3dnet
-
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
-from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_continuous
+from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_faster
 from utils.trainer import train_model
+from utils.logger import create_logger, get_logger
+from facenet_pytorch import InceptionResnetV1, MTCNN
 
-# Convolution3Dを使用
-# Datasetは連続した画像を出力するように設定
-# num_img=10が学習時間ギリギリのライン
-# img_sizeは特に影響は受けなさそう
+from utils.mesonet import Meso4, MesoInception4
 
-# 学習がうまく行かない。。。
-# Epoch 1  val Loss: 0.9664 Acc: 0.0615
-# Epoch 2  val Loss: 1.3283 Acc: 0.0590
+
+# 1枚の画像のみをピックアップして学習する
 
 # Config  ################################################################
 data_dir = '../input'
 seed = 0
-img_size = 100
-batch_size = 8
-epoch = 10
-model_name = 'conv3D'
+img_size = 256
+batch_size = 32
+epoch = 20
+lr = 0.001
+model_name = 'mesoinception4'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-criterion = nn.CrossEntropyLoss()
-# Image Num per 1 movie
-img_num = 10
-# frame number for extracting image from movie
-frame_window = 10
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
 real_mov_num = None
 # Label_Smoothing
 label_smooth = 0
+# Version of Logging
+version = model_name + '_000'
 
 # Set Seed
 seed_everything(seed)
+
+# Face Detector
+detector = MTCNN(image_size=img_size, margin=14, keep_all=True, factor=0.5, device=device).eval()
 
 # Set Mov_file path  ################################################################
 metadata = get_metadata(data_dir)
 train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
 
+# Loss Function  ################################################################
+criterion = nn.BCEWithLogitsLoss(reduction='sum')
+
 # Preprocessing  ################################################################
 # Dataset
-train_dataset = DeepfakeDataset_continuous(
-    train_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='train', img_size=img_size, img_num=img_num, frame_window=frame_window)
+train_dataset = DeepfakeDataset_faster(
+    train_mov_path, metadata, device, detector, img_size, getting_idx=0)
 
-val_dataset = DeepfakeDataset_continuous(
-    val_mov_path, metadata, device, transform=ImageTransform(img_size),
-    phase='val', img_size=img_size, img_num=img_num, frame_window=frame_window)
+val_dataset = DeepfakeDataset_faster(
+    val_mov_path, metadata, device, detector, img_size, getting_idx=0)
 
 # DataLoader
 train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -71,16 +69,26 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
-net = Conv3dnet(output_size=2)
+net = MesoInception4(num_classes=1)
 
 # Setting Optimizer  ################################################################
-optimizer = optim.Adam(params=net.parameters(), lr=0.01)
+optimizer = optim.Adam(params=net.parameters(), lr=lr)
 print('Model Already')
+
+# logging  ################################################################
+create_logger(version)
+get_logger(version).info('------- Config ------')
+get_logger(version).info(f'Random Seed: {seed}')
+get_logger(version).info(f'Batch Size: {batch_size}')
+get_logger(version).info(f'Loss: {criterion.__class__.__name__}')
+get_logger(version).info(f'Optimizer: {optimizer.__class__.__name__}')
+get_logger(version).info(f'Learning Rate: {lr}')
+get_logger(version).info('------- Train Start ------')
 
 # Train  ################################################################
 net, best_loss, df_loss = train_model(net, dataloader_dict, criterion, optimizer,
                                       num_epoch=epoch, device=device, model_name=model_name,
-                                      label_smooth=label_smooth)
+                                      label_smooth=label_smooth, version=version)
 
 # Save Model  ################################################################
 date = datetime.datetime.now().strftime('%Y%m%d')
