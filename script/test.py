@@ -38,7 +38,8 @@ real_mov_num = None
 # Set Seed
 seed_everything(seed)
 
-detector = MTCNN(image_size=img_size, margin=14, keep_all=True, factor=0.5, device=device).eval()
+detector = MTCNN(image_size=img_size, margin=14, keep_all=False,
+                 select_largest=False, factor=0.5, device=device, post_process=False).eval()
 
 # Set Mov_file path  ################################################################
 metadata = get_metadata(data_dir)
@@ -50,46 +51,32 @@ criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
 # Preprocessing  ################################################################
 
-gen = DeepfakeDataset_3d_faster(train_mov_path, metadata, device, detector, img_num=20, img_size=224, frame_window=10)
+dataset = DeepfakeDataset_3d(train_mov_path, metadata, device, transform=ImageTransform(img_size), phase='train',
+                 img_num=20, img_size=224, frame_window=10)
 
-img_list = get_img_from_mov_2(train_mov_path[0], img_num, frame_window)
+dataset_2 = DeepfakeDataset_3d_faster(train_mov_path, metadata, device, detector, img_num=20, img_size=224, frame_window=10)
+
+gen = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+gen_2 = DataLoader(dataset_2, batch_size=batch_size, shuffle=True)
 
 
-imgss = []
-from PIL import Image
+# since = time.time()
+# iters = iter(gen)
+# _ = next(iters)
+# elap = time.time() - since
+# print(elap)
 
-# for i in range(3):
-#     plt.imshow(img_list[i])
-#     plt.show()
-#
-#     img = detector(Image.fromarray(img_list[i]))
-#
-#     # plt.imshow(img)
-#     # plt.show()
-#
-#     # img = ImageTransform(img_size)(img, 'train')
-#
-#     img = img /2 + 0.5
-#     print(img.size())
-#
-#     for i in range(img.size(0)):
-#         plt.imshow(img[i, :, :, :].permute(1, 2, 0).numpy())
-#         plt.show()
-#
-#     imgss.append(img)
-#
-# print(imgss)
-# print(torch.stack(imgss).size())
-
-img, label, path = gen.__getitem__(0)
+since = time.time()
+iters = iter(gen_2)
+img, label, path = next(iters)
+elap = time.time() - since
+print(elap)
 
 print(img.size())
-print(label)
-print(path)
+print(img[0])
 
-for i in range(5):
-    print(img[i].size())
-    print(torch.sum(img[i]))
-    print(img[i])
-    plt.imshow(img[i].permute(1, 2, 0).numpy())
-    plt.show()
+img = img[0][0].permute(1, 2, 0).int().numpy()
+
+plt.imshow(img)
+plt.show()

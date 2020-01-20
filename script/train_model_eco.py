@@ -23,7 +23,7 @@ from facenet_pytorch import InceptionResnetV1, MTCNN
 data_dir = '../input'
 seed = 0
 img_size = 224
-batch_size = 4
+batch_size = 8
 epoch = 20
 lr = 0.001
 model_name = 'eco'
@@ -31,17 +31,18 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Image Num per 1 movie
 img_num = 16
 # frame number for extracting image from movie
-frame_window = 5
+frame_window = 10
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
 real_mov_num = None
 # Label_Smoothing
 label_smooth = 0
 # Version of Logging
-version = model_name + '_000'
+version = model_name + '_001'
 
 # Face Detector
-detector = MTCNN(image_size=img_size, margin=14, keep_all=True, factor=0.5, device=device).eval()
+detector = MTCNN(image_size=img_size, margin=14, keep_all=False,
+                 select_largest=False, factor=0.5, device=device, post_process=False).eval()
 
 # Set Seed
 seed_everything(seed)

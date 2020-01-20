@@ -178,27 +178,22 @@ class DeepfakeDataset_3d_faster(Dataset):
         img_list = []
         all_image = get_img_from_mov_2(mov_path, self.img_num, self.frame_window)
         for i in range(len(all_image)):
-            try:
-                image = all_image[i]  # Only First Frame Face
-                # FaceCrop
-                face = self.detector(Image.fromarray(image))
-                # 検出できなかった場合
-                if face is None:
-                    face = torch.randn(1, 3, self.img_size, self.img_size)
-                # 最初の画像のみ使用
-                face = face[0, :, :, :]
+            img_list.append(Image.fromarray(all_image[i]))
 
-                # Unnormalize
-                face = face / 2 + 0.5
-            except:
-                face = torch.randn(3, self.img_size, self.img_size)
+        # まとめて顔抽出
+        img_list = self.detector(img_list)
+        # Noneを埋める
+        img_list = [x if x is not None else torch.randn(3, self.img_size, self.img_size) for x in img_list]
 
-            img_list.append(face)
-
+        while True:
+            if len(img_list) != self.img_num:
+                img_list.append(torch.randn(3, self.img_size, self.img_size))
+            else:
+                break
+        # Stack
         img_list = torch.stack(img_list)
 
         return img_list, label, mov_path
-
 
 
 # 1動画ごとに連続した画像を取得
