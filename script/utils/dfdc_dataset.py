@@ -183,8 +183,7 @@ class DeepfakeDataset_3d_faster(Dataset):
         # まとめて顔抽出
         img_list = self.detector(img_list)
         # Noneを埋める
-        img_list = [x if x is not None else torch.randn(3, self.img_size, self.img_size) for x in img_list]
-
+        img_list = [c for c in img_list if c is not None]
         while True:
             if len(img_list) != self.img_num:
                 img_list.append(torch.randn(3, self.img_size, self.img_size))

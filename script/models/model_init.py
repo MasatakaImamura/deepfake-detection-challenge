@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from efficientnet_pytorch import EfficientNet
-from utils.convlstm import ConvLSTM
+from models.convlstm import ConvLSTM
 from facenet_pytorch import InceptionResnetV1
 
 
