@@ -14,7 +14,6 @@ class LightningSystem(pl.LightningModule):
         self.criterion = criterion
         self.optimizer = optimizer
 
-
     def forward(self, x):
         return self.net(x)
 
@@ -22,7 +21,7 @@ class LightningSystem(pl.LightningModule):
         img, label, _ = batch
         pred = self.forward(img)
 
-        loss = self.criterion(pred, label.long())
+        loss = self.criterion(pred, label.unsqueeze(1).float())
         logs = {'log': loss}
 
         return {'loss': loss, 'log': logs, 'progress_bar': logs}
@@ -31,7 +30,7 @@ class LightningSystem(pl.LightningModule):
         img, label, _ = batch
         pred = self.forward(img)
 
-        loss = self.criterion(pred, label.long())
+        loss = self.criterion(pred, label.unsqueeze(1).float())
 
         return {'val_loss': loss}
 
