@@ -1,8 +1,0 @@
-------- Config ------ 	(2020-01-19 09:56:50,648)
-Random Seed: 0 	(2020-01-19 09:56:50,648)
-Batch Size: 32 	(2020-01-19 09:56:50,649)
-Loss: BCEWithLogitsLoss 	(2020-01-19 09:56:50,649)
-Optimizer: Adam 	(2020-01-19 09:56:50,649)
-Learning Rate: 0.001 	(2020-01-19 09:56:50,649)
-Update Params: ['layer3', 'layer4', 'fc.weight', 'fc.bias'] 	(2020-01-19 09:56:50,649)
-------- Train Start ------ 	(2020-01-19 09:56:50,649)

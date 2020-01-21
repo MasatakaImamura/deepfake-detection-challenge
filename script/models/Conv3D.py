@@ -164,7 +164,7 @@ class MyNet(nn.Module):
         self.ef = EfficientNet.from_pretrained('efficientnet-b4', num_classes=output_size)
         self.resnet_3d_1 = Resnet_3D_1()
         self.resnet_3d_2 = Resnet_3D_2()
-        self.global_pool = nn.AvgPool3d(kernel_size=(5, 4, 4), stride=1, padding=0)
+        self.global_pool = nn.AvgPool3d(kernel_size=(4, 4, 4), stride=1, padding=0)
         self.fc_1 = nn.Linear(256, 64, bias=True)
         self.dropout = nn.Dropout(0.5)
         self.fc_last = nn.Linear(64, output_size, bias=True)

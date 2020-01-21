@@ -19,6 +19,7 @@ torchvision = "==0.4.2"
 tqdm = "*"
 facenet-pytorch = "*"
 pytorch-lightning = "*"
+tensorboard = "*"
 
 [requires]
 python_version = "3.7"

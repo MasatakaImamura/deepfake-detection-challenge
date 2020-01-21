@@ -33,9 +33,9 @@ lr = 0.001
 model_name = 'mynet'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Image Num per 1 movie
-img_num = 20
+img_num = 14
 # frame number for extracting image from movie
-frame_window = 10
+frame_window = 20
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
 real_mov_num = None
@@ -151,7 +151,7 @@ trainer = Trainer(
     max_nb_epochs=epoch,
     default_save_path=output_path,
     checkpoint_callback=checkpoint_callback,
-    # gpus=[0]
+    gpus=[0]
 )
 
 trainer.fit(model)

@@ -37,6 +37,7 @@ class LightningSystem(pl.LightningModule):
     def validation_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         logs = {'val_loss': avg_loss}
+        torch.cuda.empty_cache()
 
         return {'avg_val_loss': avg_loss, 'log': logs}
 
