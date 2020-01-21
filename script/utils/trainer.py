@@ -114,6 +114,7 @@ def train_model(net, dataloader_dict, criterion, optimizer, num_epoch, device, m
     net.load_state_dict(best_model_wts)
     return net, best_loss, df_loss
 
+
 # For Continuous
 def train_model_by_generator(net, metadata, train_mov_path, transform, val_mov_path, criterion, optimizer,
                              num_epoch, device, frame_window, max_frame=300):

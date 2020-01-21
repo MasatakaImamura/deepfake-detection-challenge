@@ -5,15 +5,19 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
-from utils.model_init import model_init
-from utils.Conv3D import Conv3dnet, MyNet
+from models.model_init import model_init
+from models.Conv3D import Conv3dnet, MyNet
+from models.eco import ECO_Lite
 
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
 from utils.dfdc_dataset import DeepfakeDataset_3d, DeepfakeDataset_3d_faster
 from utils.trainer import train_model
-from utils.eco import ECO_Lite
 from utils.logger import create_logger, get_logger
+from utils.lightning import LightningSystem
+
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning import Trainer
 from facenet_pytorch import InceptionResnetV1, MTCNN
 
 # Convolution3Dを使用
@@ -123,15 +127,32 @@ get_logger(version).info(f'Optimizer: {optimizer.__class__.__name__}')
 get_logger(version).info(f'Learning Rate: {lr}')
 get_logger(version).info('------- Train Start ------')
 
+# # Train  ################################################################
+# net, best_loss, df_loss = train_model(net, dataloader_dict, criterion, optimizer,
+#                                       num_epoch=epoch, device=device, model_name=model_name,
+#                                       label_smooth=label_smooth, version=version)
+#
+# # Save Model  ################################################################
+# date = datetime.datetime.now().strftime('%Y%m%d')
+# torch.save(net.state_dict(), "../model/{}_loss{:.3f}_{}.pth".format(model_name, best_loss, date))
+#
+# # Save Loss
+# df_loss.to_csv('../loss/LossTable_{}_loss{:.3f}_{}.csv'.format(model_name, best_loss, date))
+# plot_loss(df_loss, 'LossPlot_{}_loss{:.3f}_{}'.format(model_name, best_loss, date))
+
+# Pytorch Lightning
 # Train  ################################################################
-net, best_loss, df_loss = train_model(net, dataloader_dict, criterion, optimizer,
-                                      num_epoch=epoch, device=device, model_name=model_name,
-                                      label_smooth=label_smooth, version=version)
+output_path = '../lightning'
 
-# Save Model  ################################################################
-date = datetime.datetime.now().strftime('%Y%m%d')
-torch.save(net.state_dict(), "../model/{}_loss{:.3f}_{}.pth".format(model_name, best_loss, date))
+model = LightningSystem(net, dataloader_dict, criterion, optimizer)
+checkpoint_callback = ModelCheckpoint(filepath='../model', monitor='avg_val_loss',
+                                      save_best_only=True, mode='min', save_weights_only=True)
+trainer = Trainer(
+    max_nb_epochs=epoch,
+    default_save_path=output_path,
+    checkpoint_callback=checkpoint_callback,
+    # gpus=[0]
+)
 
-# Save Loss
-df_loss.to_csv('../loss/LossTable_{}_loss{:.3f}_{}.csv'.format(model_name, best_loss, date))
-plot_loss(df_loss, 'LossPlot_{}_loss{:.3f}_{}'.format(model_name, best_loss, date))
+trainer.fit(model)
+
