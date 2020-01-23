@@ -26,7 +26,8 @@ class LightningSystem(pl.LightningModule):
         img, label, _ = batch
         pred = self.forward(img)
 
-        loss = self.criterion(pred, label.unsqueeze(1).float())
+        # バッチ平均のlossを計算する
+        loss = self.criterion(pred, label.unsqueeze(1).float()) / img.size(0)
         logs = {'train_loss': loss}
 
         return {'loss': loss, 'log': logs, 'progress_bar': logs}
@@ -35,7 +36,7 @@ class LightningSystem(pl.LightningModule):
         img, label, _ = batch
         pred = self.forward(img)
 
-        loss = self.criterion(pred, label.unsqueeze(1).float())
+        loss = self.criterion(pred, label.unsqueeze(1).float()) / img.size(0)
 
         return {'val_loss': loss}
 
@@ -66,6 +67,7 @@ class LightningSystem_2(pl.LightningModule):
         super(LightningSystem_2, self).__init__()
         self.net = net
         self.device = device
+        self.img_num = img_num
         self.batch_size = batch_size
 
         # Data Loading  ################################################################
@@ -127,13 +129,14 @@ class LightningSystem_2(pl.LightningModule):
         pred = self.forward(img)
 
         # LogLoss
-        loss = self.criterion(pred, label.unsqueeze(1).float())
+        # バッチ平均のlossを計算する
+        loss = self.criterion(pred, label.unsqueeze(1).float()) / img.size(0)
 
         # Accuracy
         pred = torch.sigmoid(pred)
         pred[pred > 0.5] = 1
         pred[pred < 0.5] = 0
-        acc = torch.sum(pred == label) / pred.size()[0]
+        acc = torch.sum(pred == label).float() / self.img_num / pred.size(0)
 
         logs = {'train_loss': loss, 'train_acc': acc}
 
@@ -144,13 +147,13 @@ class LightningSystem_2(pl.LightningModule):
         pred = self.forward(img)
 
         # LogLoss
-        loss = self.criterion(pred, label.unsqueeze(1).float())
+        loss = self.criterion(pred, label.unsqueeze(1).float()) / img.size(0)
 
         # Accuracy
         pred = torch.sigmoid(pred)
         pred[pred > 0.5] = 1
         pred[pred < 0.5] = 0
-        acc = torch.sum(pred == label) / pred.size()[0]
+        acc = torch.sum(pred == label).float() / self.img_num / pred.size(0)
 
         logs = {'val_loss': loss, 'val_acc': acc}
 
