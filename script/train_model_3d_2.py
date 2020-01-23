@@ -70,7 +70,7 @@ trainer = Trainer(
     max_nb_epochs=epoch,
     default_save_path=output_path,
     checkpoint_callback=checkpoint_callback,
-    # gpus=[0]
+    gpus=[0]
 )
 
 trainer.fit(model)
