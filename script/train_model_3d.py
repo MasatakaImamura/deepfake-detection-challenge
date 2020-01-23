@@ -70,8 +70,10 @@ val_dataset = DeepfakeDataset_3d_faster(
 )
 
 # DataLoader
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
+                              pin_memory=True)
+val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
+                            pin_memory=True)
 dataloader_dict = {
     'train': train_dataloader,
     'val': val_dataloader
@@ -82,6 +84,7 @@ print('DataLoader Already')
 
 # Model  ################################################################
 torch.cuda.empty_cache()
+torch.backends.cudnn.benchmark = True
 net = MyNet(output_size=1)
 
 # Fine Tuning  ###############################################################
@@ -143,15 +146,18 @@ get_logger(version).info('------- Train Start ------')
 # Pytorch Lightning
 # Train  ################################################################
 output_path = '../lightning'
+# weight_path = '../lightning/lightning_logs/versionXXX'
 
 model = LightningSystem(net, dataloader_dict, criterion, optimizer)
-checkpoint_callback = ModelCheckpoint(filepath='../model', monitor='avg_val_loss',
+# model.load_state_dict(torch.load(weight_path, map_location=device))
+
+checkpoint_callback = ModelCheckpoint(filepath='../lightning/ckpt', monitor='val_loss',
                                       save_best_only=True, mode='min', save_weights_only=True)
 trainer = Trainer(
     max_nb_epochs=epoch,
     default_save_path=output_path,
     checkpoint_callback=checkpoint_callback,
-    gpus=[0]
+    # gpus=[0]
 )
 
 trainer.fit(model)
