@@ -6,7 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
 from models.model_init import model_init
-from models.Conv3D import Conv3dnet, MyNet
+from models.Conv3D import Efficientnet_3d, Facenet_3d
 from models.eco import ECO_Lite
 
 from utils.data_augumentation import ImageTransform
@@ -55,7 +55,7 @@ criterion = nn.BCEWithLogitsLoss(reduction='sum')
 # Model  ################################################################
 torch.cuda.empty_cache()
 torch.backends.cudnn.benchmark = True
-net = MyNet(output_size=1)
+net = Facenet_3d(output_size=1)
 
 # Pytorch Lightning
 # Train  ################################################################
@@ -70,7 +70,7 @@ trainer = Trainer(
     max_nb_epochs=epoch,
     default_save_path=output_path,
     checkpoint_callback=checkpoint_callback,
-    gpus=[0]
+    # gpus=[0]
 )
 
 trainer.fit(model)

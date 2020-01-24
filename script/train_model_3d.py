@@ -6,7 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
 from models.model_init import model_init
-from models.Conv3D import Conv3dnet, MyNet
+from models.Conv3D import Efficientnet_3d
 from models.eco import ECO_Lite
 
 from utils.data_augumentation import ImageTransform

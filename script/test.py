@@ -12,7 +12,7 @@ import torch.optim as optim
 import torchvision
 
 from models.model_init import model_init, convLSTM, convLSTM_resnet
-from models.Conv3D import Conv3dnet, MyNet
+from models.Conv3D import Efficientnet_3d, Facenet_3d
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov_2
 from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_3d, face_img_generator, DeepfakeDataset_3d_faster
@@ -52,18 +52,11 @@ criterion = nn.BCEWithLogitsLoss(reduction='sum')
 #                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
 
 
-import torch.utils.model_zoo as model_zoo
+z = torch.randn(4, 14, 3, 224, 224)
 
-z = torch.randn(4, 3, 224, 224)
-
-net = Xception(num_classes=1000)
-
-weights = model_zoo.load_url('http://data.lip6.fr/cadene/pretrainedmodels/xception-b5690688.pth')
-
-print(weights)
-
-
-out = net(z)
-
+model = Facenet_3d()
+out = model(z)
 print(out.size())
+
+
 
