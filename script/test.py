@@ -55,8 +55,11 @@ criterion = nn.BCEWithLogitsLoss(reduction='sum')
 z = torch.randn(4, 14, 3, 224, 224)
 
 model = Facenet_3d()
-out = model(z)
-print(out.size())
+
+
+print(model)
+# out = model(z)
+# print(out.size())
 
 
 

@@ -88,8 +88,8 @@ class LightningSystem_2(pl.LightningModule):
 
         # Fine Tuning  ###############################################################
         # 後半のConv3dのみを更新
-        params_to_update_1, params_to_update_2, params_to_update_3 = [], [], []
-        update_params_name = ['resnet_3d_1', 'resnet_3d_2', 'fc']
+        params_to_update_1, params_to_update_2, params_to_update_3, params_to_update_4 = [], [], [], []
+        update_params_name = ['repeat', 'resnet_3d_1', 'resnet_3d_2', 'fc']
 
         for name, param in net.named_parameters():
             if update_params_name[0] in name:
@@ -101,14 +101,18 @@ class LightningSystem_2(pl.LightningModule):
             elif update_params_name[2] in name:
                 param.requires_grad = True
                 params_to_update_3.append(param)
+            elif update_params_name[3] in name:
+                param.requires_grad = True
+                params_to_update_4.append(param)
             else:
                 param.requires_grad = False
 
         # Optimizer  ################################################################
         self.optimizer = optim.Adam([
-                                    {'params': params_to_update_1, 'lr': 1e-3},
-                                    {'params': params_to_update_2, 'lr': 5e-3},
-                                    {'params': params_to_update_3, 'lr': 1e-2},
+            {'params': params_to_update_1, 'lr': 0.001},
+            {'params': params_to_update_2, 'lr': 0.005},
+            {'params': params_to_update_3, 'lr': 0.01},
+            {'params': params_to_update_4, 'lr': 0.05},
         ])
 
     @pl.data_loader
