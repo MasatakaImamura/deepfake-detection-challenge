@@ -64,7 +64,7 @@ output_path = '../lightning'
 model = LightningSystem_2(net, data_dir, device, detector, img_num, img_size,
                           frame_window, batch_size, criterion)
 
-checkpoint_callback = ModelCheckpoint(filepath='../model/ckpt', monitor='val_loss',
+checkpoint_callback = ModelCheckpoint(filepath='../lightning/ckpt', monitor='val_loss',
                                       save_best_only=True, mode='min', save_weights_only=True)
 trainer = Trainer(
     max_nb_epochs=epoch,
