@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 import time
+from PIL import Image
 
 from sklearn.model_selection import train_test_split
 import datetime
@@ -10,6 +11,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 import torchvision
+from torchvision.transforms import Normalize
 
 from models.model_init import model_init, convLSTM, convLSTM_resnet
 from models.Conv3D import Efficientnet_3d, Facenet_3d
@@ -23,6 +25,8 @@ from utils.logger import create_logger, get_logger
 
 from models.xception import Xception
 
+from efficientnet_pytorch import EfficientNet
+
 
 # Config  ################################################################
 data_dir = '../input'
@@ -32,10 +36,11 @@ batch_size = 4
 epoch = 8
 model_name = 'resnet152'
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-device = 'cpu'
+device = 'cuda:0'
 img_num = 10
 frame_window = 5
 real_mov_num = None
+cascade_path = '../haarcascade/haarcascade_frontalface_alt2.xml'
 
 # Set Seed
 seed_everything(seed)
@@ -51,15 +56,54 @@ criterion = nn.BCEWithLogitsLoss(reduction='sum')
 # train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
 #                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
 
+z = torch.randn(1, 14, 3, 224, 224)
 
-z = torch.randn(4, 14, 3, 224, 224)
-
-model = Facenet_3d()
-
-
-print(model)
-# out = model(z)
+# net = EfficientNet.from_pretrained('efficientnet-b4', num_classes=1)
+# print(net)
+# z = z.to(device)
+# net = net.to(device)
+# out = net(z.squeeze())
 # print(out.size())
+#
+label = torch.tensor(1)
 
+label = label.view(14, -1)
+print(label.size())
+print(label)
+# label = torch.full((14, 1), label.item())
+# print(label)
+# print(label.size())
+# label = label.to(device)
+# #
+# # label = torch.full((4,), 1)
+# loss = criterion(out, label)
+# print(loss)
+
+
+
+# set_img_idx = 90
+#
+# print(train_mov_path[set_img_idx])
+#
+# imgs = get_img_from_mov_2(train_mov_path[set_img_idx], img_num, frame_window)
+#
+# face_cascade = detect_face(imgs[0], cascade_path)
+# face_mtcnn = detector(Image.fromarray(imgs[0]))
+#
+# plt.imshow(imgs[0])
+# plt.show()
+#
+# print(face_cascade[0])
+# print('#'*40)
+# print(face_mtcnn.permute(1, 2, 0))
+#
+# face_mtcnn = Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))(face_mtcnn)
+# print('#'*40)
+# print(face_mtcnn.permute(1, 2, 0))
+#
+# plt.imshow(face_cascade[0])
+# plt.show()
+# plt.imshow(face_mtcnn)
+# plt.show()
 
 
