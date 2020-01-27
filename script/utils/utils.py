@@ -147,3 +147,12 @@ def plot_loss(df_loss, figname):
     plt.plot(df_loss['Val_loss'], label='Val')
     plt.legend()
     plt.savefig('../loss/{}.png'.format(figname))
+
+
+
+def freeze_until(net, param_name):
+    found_name = False
+    for name, params in net.named_parameters():
+        if name == param_name:
+            found_name = True
+        params.requires_grad = found_name

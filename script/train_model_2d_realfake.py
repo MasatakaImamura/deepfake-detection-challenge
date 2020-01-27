@@ -6,11 +6,10 @@ from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 
 from models.model_init import model_init
-from models.Conv3D import Efficientnet_3d, Facenet_3d
 from models.eco import ECO_Lite
 
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
-from utils.lightning import LightningSystem_3d, LightningSystem_2d
+from utils.lightning import LightningSystem_3d, LightningSystem_2d, LightningSystem_realfake
 
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import Trainer
@@ -24,10 +23,9 @@ from efficientnet_pytorch import EfficientNet
 data_dir = '../input'
 seed = 0
 img_size = 224
-batch_size = 1
+batch_size = 12
 epoch = 20
 lr = 0.001
-model_name = 'mynet'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Image Num per 1 movie
 img_num = 14
@@ -36,8 +34,6 @@ frame_window = 20
 # Use movie number per 1 epoch
 # If set "None", all real movies are used
 real_mov_num = None
-# Version of Logging
-version = model_name + '_000'
 
 # Face Detector
 detector = MTCNN(image_size=img_size, margin=14, keep_all=False,
@@ -58,8 +54,8 @@ net = EfficientNet.from_pretrained('efficientnet-b4', num_classes=1)
 # Train  ################################################################
 output_path = '../lightning'
 
-model = LightningSystem_2d(net, data_dir, device, detector, img_num, img_size,
-                           frame_window, batch_size, criterion)
+model = LightningSystem_realfake(net, data_dir, device, detector, img_num, img_size,
+                                 frame_window, batch_size, criterion)
 
 checkpoint_callback = ModelCheckpoint(filepath='../lightning/ckpt', monitor='avg_val_loss',
                                       mode='min', save_weights_only=True)
@@ -68,8 +64,9 @@ trainer = Trainer(
     min_epochs=5,
     default_save_path=output_path,
     checkpoint_callback=checkpoint_callback,
-    gpus=[0]
+    # gpus=[0]
 )
 
 trainer.fit(model)
 
+# batch_size=4: 209s/batch

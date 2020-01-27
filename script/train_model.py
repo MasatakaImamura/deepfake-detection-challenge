@@ -8,7 +8,7 @@ import torch.optim as optim
 from utils.model_init import model_init
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, plot_loss
-from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_faster
+from utils.dfdc_dataset import DeepfakeDataset_2d
 from utils.trainer import train_model
 from utils.logger import create_logger, get_logger
 from facenet_pytorch import InceptionResnetV1, MTCNN
@@ -51,10 +51,10 @@ criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
 # Preprocessing  ################################################################
 # Dataset
-train_dataset = DeepfakeDataset_faster(
+train_dataset = DeepfakeDataset_2d(
     train_mov_path, metadata, device, detector, img_size, getting_idx=0)
 
-val_dataset = DeepfakeDataset_faster(
+val_dataset = DeepfakeDataset_2d(
     val_mov_path, metadata, device, detector, img_size, getting_idx=0)
 
 # DataLoader

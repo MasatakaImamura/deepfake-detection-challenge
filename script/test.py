@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import cv2
+import cv2, os, random
 import numpy as np
 import time
 from PIL import Image
@@ -14,10 +14,9 @@ import torchvision
 from torchvision.transforms import Normalize
 
 from models.model_init import model_init, convLSTM, convLSTM_resnet
-from models.Conv3D import Efficientnet_3d, Facenet_3d
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov_2
-from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_3d, face_img_generator, DeepfakeDataset_3d_faster
+from utils.dfdc_dataset import DeepfakeDataset_3d, DeepfakeDataset_2d, DeepfakeDataset_3d_realfake
 # from utils.trainer import train_model
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from models.mesonet import Meso4, MesoInception4
@@ -27,6 +26,8 @@ from models.xception import Xception
 
 from efficientnet_pytorch import EfficientNet
 
+from models.blazeface import BlazeFace
+
 
 # Config  ################################################################
 data_dir = '../input'
@@ -35,10 +36,9 @@ img_size = 224
 batch_size = 4
 epoch = 8
 model_name = 'resnet152'
-# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-device = 'cuda:0'
-img_num = 10
-frame_window = 5
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+img_num = 14
+frame_window = 20
 real_mov_num = None
 cascade_path = '../haarcascade/haarcascade_frontalface_alt2.xml'
 
@@ -52,58 +52,27 @@ detector = MTCNN(image_size=img_size, margin=14, keep_all=False,
 criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
 # # Set Mov_file path  ################################################################
-# metadata = get_metadata(data_dir)
+metadata = get_metadata(data_dir)
 # train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
 #                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
 
-z = torch.randn(1, 14, 3, 224, 224)
-
-# net = EfficientNet.from_pretrained('efficientnet-b4', num_classes=1)
-# print(net)
-# z = z.to(device)
-# net = net.to(device)
-# out = net(z.squeeze())
-# print(out.size())
-#
-label = torch.tensor(1)
-
-label = label.view(14, -1)
-print(label.size())
-print(label)
-# label = torch.full((14, 1), label.item())
-# print(label)
-# print(label.size())
-# label = label.to(device)
-# #
-# # label = torch.full((4,), 1)
-# loss = criterion(out, label)
-# print(loss)
+# dataset = DeepfakeDataset_3d_realfake(data_dir, metadata, device, detector, img_num=14, img_size=224, frame_window=20)
+# dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
 
 
+import torchvision.models as models
 
-# set_img_idx = 90
-#
-# print(train_mov_path[set_img_idx])
-#
-# imgs = get_img_from_mov_2(train_mov_path[set_img_idx], img_num, frame_window)
-#
-# face_cascade = detect_face(imgs[0], cascade_path)
-# face_mtcnn = detector(Image.fromarray(imgs[0]))
-#
-# plt.imshow(imgs[0])
-# plt.show()
-#
-# print(face_cascade[0])
-# print('#'*40)
-# print(face_mtcnn.permute(1, 2, 0))
-#
-# face_mtcnn = Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))(face_mtcnn)
-# print('#'*40)
-# print(face_mtcnn.permute(1, 2, 0))
-#
-# plt.imshow(face_cascade[0])
-# plt.show()
-# plt.imshow(face_mtcnn)
-# plt.show()
+class MyResNeXt(models.resnet.ResNet):
+    def __init__(self, training=True):
+        super(MyResNeXt, self).__init__(block=models.resnet.Bottleneck,
+                                        layers=[3, 4, 6, 3],
+                                        groups=32,
+                                        width_per_group=4)
+
+        # Override the existing FC layer with a new one.
+        self.fc = nn.Linear(2048, 1)
 
 
+net = MyResNeXt()
+
+print(net)
