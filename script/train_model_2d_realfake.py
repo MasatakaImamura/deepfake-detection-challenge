@@ -23,7 +23,7 @@ from efficientnet_pytorch import EfficientNet
 data_dir = '../input'
 seed = 0
 img_size = 224
-batch_size = 12
+batch_size = 4
 epoch = 20
 lr = 0.001
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -31,13 +31,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 img_num = 14
 # frame number for extracting image from movie
 frame_window = 20
-# Use movie number per 1 epoch
-# If set "None", all real movies are used
-real_mov_num = None
 
 # Face Detector
 detector = MTCNN(image_size=img_size, margin=14, keep_all=False,
-                 select_largest=False, factor=0.5, device=device, post_process=True).eval()
+                 select_largest=False, factor=0.5, device=device, post_process=False).eval()
 
 # Set Seed
 seed_everything(seed)
@@ -63,7 +60,7 @@ trainer = Trainer(
     max_epochs=epoch,
     min_epochs=5,
     default_save_path=output_path,
-    checkpoint_callback=checkpoint_callback,
+    # checkpoint_callback=checkpoint_callback,
     # gpus=[0]
 )
 

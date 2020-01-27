@@ -4,6 +4,7 @@ import torch
 from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader, SubsetRandomSampler
+from torchvision.transforms import Normalize
 from collections import OrderedDict
 
 import pytorch_lightning as pl
@@ -377,11 +378,11 @@ class LightningSystem_realfake(pl.LightningModule):
 
         logs = {'val_loss': val_loss, 'val_acc': val_acc}
 
-        output = OrderedDict({
+        output = {
             'val_loss': val_loss,
             'val_acc': val_acc,
-            'log': logs
-        })
+            'progress_bar': logs
+        }
 
         return output
 
@@ -393,8 +394,9 @@ class LightningSystem_realfake(pl.LightningModule):
         tqdm_dict = {'avg_val_loss': val_loss_mean.item(), 'avg_val_acc': val_acc_mean.item()}
         # show val_loss and val_acc in progress bar but only log val_loss
         results = {
+            'avg_val_loss': val_acc_mean,
             'progress_bar': tqdm_dict,
-            'log': {'avg_val_loss': val_loss_mean.item(), 'avg_val_acc': val_acc_mean.item()}
+            'log': {'avg_val_loss': val_loss_mean, 'avg_val_acc': val_acc_mean}
         }
         return results
 

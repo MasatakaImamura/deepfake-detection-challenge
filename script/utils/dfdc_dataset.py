@@ -2,6 +2,7 @@ import os, cv2, random
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
+from torchvision.transforms import Normalize
 from PIL import Image
 
 from .utils import get_img_from_mov, get_img_from_mov_2, detect_face, detect_face_mtcnn
@@ -118,6 +119,7 @@ class DeepfakeDataset_3d_realfake(Dataset):
     '''
     DeepfakeDataset_3dの拡張版
     real画像とfake画像を出力するように設定
+    MTCNNのpostprocessは使わず、Normalizeを実行
     Output: (img_num, channels=3, img_size, img_size)
     '''
 
@@ -129,6 +131,13 @@ class DeepfakeDataset_3d_realfake(Dataset):
         self.img_num = img_num
         self.img_size = img_size
         self.frame_window = frame_window
+
+        # 前処理は別に行う
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+        assert self.detector.post_process is False, 'Set Detector post_process=False'
+
+        self.normalize = Normalize(mean, std)
 
         # Real_mov_path
         self.real_mov_list = metadata[metadata['label'] == 'REAL']['mov'].values
@@ -150,7 +159,7 @@ class DeepfakeDataset_3d_realfake(Dataset):
         # Get Real_mov path
         real_mov_path = os.path.join(self.data_dir, real_mov)
 
-        # Get VideoCapture
+        # Mov2Image
         cap_real = cv2.VideoCapture(real_mov_path)
         frames = int(cap_real.get(cv2.CAP_PROP_FRAME_COUNT))
         real_image_list = []
@@ -165,14 +174,18 @@ class DeepfakeDataset_3d_realfake(Dataset):
                 break
         cap_real.release()
 
+        # Detect Faces
         face_r = self.detector(real_image_list)
-        # Fill None
-        face_r = [c for c in face_r if c is not None]
+
+        # Preprocessing
+        face_r = [c / 255.0 for c in face_r if c is not None]
         while True:
             if len(face_r) != self.img_num:
-                face_r.append(torch.randn(3, self.img_size, self.img_size))
+                face_r.append(torch.randn(3, self.img_size, self.img_size).abs())
             else:
                 break
+
+        face_r = [self.normalize(face) for face in face_r]
         face_r = torch.stack(face_r)  # (img_num, channel, img_size, img_size)
 
         # Mov -> Image -> Face (Fake)  ###############################################
@@ -182,11 +195,9 @@ class DeepfakeDataset_3d_realfake(Dataset):
         fake_mov = fake_mov_list[face_idx]
         fake_mov_path = os.path.join(self.data_dir, fake_mov)
 
-        # Get VideoCapture
+        # Mov2Image
         cap_fake = cv2.VideoCapture(fake_mov_path)
-
         frames = int(cap_fake.get(cv2.CAP_PROP_FRAME_COUNT))
-
         fake_image_list = []
         for i in range(self.img_num):
             _, image_fake = cap_fake.read()
@@ -198,14 +209,18 @@ class DeepfakeDataset_3d_realfake(Dataset):
                 break
         cap_fake.release()
 
+        # Detect Faces
         face_f = self.detector(fake_image_list)
-        # Fill None
-        face_f = [c for c in face_f if c is not None]
+
+        # Preprocessing
+        face_f = [c / 255.0 for c in face_f if c is not None]
         while True:
             if len(face_f) != self.img_num:
                 face_f.append(torch.randn(3, self.img_size, self.img_size))
             else:
                 break
+
+        face_f = [self.normalize(face) for face in face_f]
         face_f = torch.stack(face_f)  # (img_num, channel, img_size, img_size)
 
         return face_r, face_f

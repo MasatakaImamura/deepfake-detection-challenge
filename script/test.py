@@ -53,8 +53,10 @@ criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
 # # Set Mov_file path  ################################################################
 metadata = get_metadata(data_dir)
-# train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
-#                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
+train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
+                                            real_mov_num=real_mov_num, train_size=0.9, seed=seed)
+
+imgs = get_img_from_mov_2(train_mov_path[0], num_img=5, frame_window=10)
 
 # dataset = DeepfakeDataset_3d_realfake(data_dir, metadata, device, detector, img_num=14, img_size=224, frame_window=20)
 # dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
@@ -62,17 +64,19 @@ metadata = get_metadata(data_dir)
 
 import torchvision.models as models
 
-class MyResNeXt(models.resnet.ResNet):
-    def __init__(self, training=True):
-        super(MyResNeXt, self).__init__(block=models.resnet.Bottleneck,
-                                        layers=[3, 4, 6, 3],
-                                        groups=32,
-                                        width_per_group=4)
+print(imgs[0])
 
-        # Override the existing FC layer with a new one.
-        self.fc = nn.Linear(2048, 1)
+face = detector(Image.fromarray(imgs[0]))
+print(face/255)
+
+print(detector.post_process)
 
 
-net = MyResNeXt()
+mean = [0.485, 0.456, 0.406]
+std = [0.229, 0.224, 0.225]
+norm = Normalize(mean, std)
 
-print(net)
+z = norm(face/255)
+
+print(z)
+
