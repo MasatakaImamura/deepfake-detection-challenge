@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import Normalize
 from PIL import Image
 
-from .utils import get_img_from_mov, get_img_from_mov_2, detect_face, detect_face_mtcnn
+from .utils import get_img_from_mov, get_img_from_mov, detect_face, detect_face_mtcnn
 
 # OSの違いによるパス分割を定義
 if os.name == 'nt':
@@ -24,13 +24,15 @@ class DeepfakeDataset_2d(Dataset):
     Output Shape -> (channel=3, img_size, img_size)
     '''
 
-    def __init__(self, file_list, metadata, device, detector, img_size, getting_idx=0):
+    def __init__(self, file_list, metadata, device, detector, img_size, getting_idx=0, img_num=14, frame_window=20):
         self.file_list = file_list
         self.metadata = metadata
         self.device = device
         self.detector = detector
         self.img_size = img_size
         self.getting_idx = getting_idx
+        self.img_num = img_num
+        self.frame_window = frame_window
 
     def __len__(self):
         return len(self.file_list)
@@ -49,7 +51,7 @@ class DeepfakeDataset_2d(Dataset):
 
         # Movie to Image
         try:
-            image = get_img_from_mov(mov_path)[self.getting_idx]  # Specified Frame Only
+            image = get_img_from_mov(mov_path, self.img_num, self.frame_window)[self.getting_idx]  # Specified Frame Only
             # FaceCrop
             face = self.detector(Image.fromarray(image))
             # 検出できなかった場合
@@ -79,6 +81,13 @@ class DeepfakeDataset_3d(Dataset):
         self.img_size = img_size
         self.frame_window = frame_window
 
+        # 前処理は別に行う
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+        assert self.detector.post_process is False, 'Set Detector post_process=False'
+
+        self.normalize = Normalize(mean, std)
+
     def __len__(self):
         return len(self.file_list)
 
@@ -96,12 +105,23 @@ class DeepfakeDataset_3d(Dataset):
 
         # Movie to Image
         img_list = []
-        all_image = get_img_from_mov_2(mov_path, self.img_num, self.frame_window)
+        all_image = get_img_from_mov(mov_path, self.img_num, self.frame_window)
         for i in range(len(all_image)):
             img_list.append(Image.fromarray(all_image[i]))
 
         # まとめて顔抽出
         img_list = self.detector(img_list)
+
+        # Preprocessing
+        img_list = [c / 255.0 for c in img_list if c is not None]
+        while True:
+            if len(img_list) != self.img_num:
+                img_list.append(torch.randn(3, self.img_size, self.img_size).abs())
+            else:
+                break
+
+        img_list = [self.normalize(face) for face in img_list]
+
         # Noneを埋める
         img_list = [c for c in img_list if c is not None]
         while True:

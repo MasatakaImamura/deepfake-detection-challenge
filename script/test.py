@@ -15,14 +15,14 @@ from torchvision.transforms import Normalize
 
 from models.model_init import model_init, convLSTM, convLSTM_resnet
 from utils.data_augumentation import ImageTransform
-from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov_2
+from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov, freeze_until
 from utils.dfdc_dataset import DeepfakeDataset_3d, DeepfakeDataset_2d, DeepfakeDataset_3d_realfake
 # from utils.trainer import train_model
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from models.mesonet import Meso4, MesoInception4
 from utils.logger import create_logger, get_logger
 
-from models.xception import Xception
+from models.Facenet_3d import Facenet_3d
 
 from efficientnet_pytorch import EfficientNet
 
@@ -52,11 +52,11 @@ detector = MTCNN(image_size=img_size, margin=14, keep_all=False,
 criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
 # # Set Mov_file path  ################################################################
-metadata = get_metadata(data_dir)
-train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
-                                            real_mov_num=real_mov_num, train_size=0.9, seed=seed)
-
-imgs = get_img_from_mov_2(train_mov_path[0], num_img=5, frame_window=10)
+# metadata = get_metadata(data_dir)
+# train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
+#                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
+#
+# imgs = get_img_from_mov(train_mov_path[0], num_img=5, frame_window=10)
 
 # dataset = DeepfakeDataset_3d_realfake(data_dir, metadata, device, detector, img_num=14, img_size=224, frame_window=20)
 # dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
@@ -64,19 +64,12 @@ imgs = get_img_from_mov_2(train_mov_path[0], num_img=5, frame_window=10)
 
 import torchvision.models as models
 
-print(imgs[0])
+net = Facenet_3d()
+# print(net)
+#
+# for name, params in net.named_parameters():
+#     print(name)
 
-face = detector(Image.fromarray(imgs[0]))
-print(face/255)
+freeze_until(net, "facenet.repeat_3.0.branch0.conv.weight")
 
-print(detector.post_process)
-
-
-mean = [0.485, 0.456, 0.406]
-std = [0.229, 0.224, 0.225]
-norm = Normalize(mean, std)
-
-z = norm(face/255)
-
-print(z)
-
+print([params for params in net.parameters() if params.requires_grad])

@@ -44,33 +44,11 @@ class LightningSystem_3d(pl.LightningModule):
         self.criterion = criterion
 
         # Fine Tuning  ###############################################################
-        # 後半のConv3dのみを更新
-        params_to_update_1, params_to_update_2, params_to_update_3, params_to_update_4 = [], [], [], []
-        update_params_name = ['repeat_2', 'resnet_3d_1', 'resnet_3d_2', 'fc']
-
-        for name, param in net.named_parameters():
-            if update_params_name[0] in name:
-                param.requires_grad = True
-                params_to_update_1.append(param)
-            elif update_params_name[1] in name:
-                param.requires_grad = True
-                params_to_update_2.append(param)
-            elif update_params_name[2] in name:
-                param.requires_grad = True
-                params_to_update_3.append(param)
-            elif update_params_name[3] in name:
-                param.requires_grad = True
-                params_to_update_4.append(param)
-            else:
-                param.requires_grad = False
+        # Facenet_3d
+        freeze_until(self.net, "facenet.repeat_3.0.branch0.conv.weight")
 
         # Optimizer  ################################################################
-        self.optimizer = optim.Adam([
-            {'params': params_to_update_1, 'lr': 0.001},
-            {'params': params_to_update_2, 'lr': 0.005},
-            {'params': params_to_update_3, 'lr': 0.01},
-            {'params': params_to_update_4, 'lr': 0.05},
-        ])
+        self.optimizer = optim.Adam(params=self.net.parameters())
 
     @pl.data_loader
     def train_dataloader(self):

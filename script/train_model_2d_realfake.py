@@ -23,7 +23,7 @@ from efficientnet_pytorch import EfficientNet
 data_dir = '../input'
 seed = 0
 img_size = 224
-batch_size = 4
+batch_size = 8
 epoch = 20
 lr = 0.001
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -60,8 +60,8 @@ trainer = Trainer(
     max_epochs=epoch,
     min_epochs=5,
     default_save_path=output_path,
-    # checkpoint_callback=checkpoint_callback,
-    gpus=[0]
+    checkpoint_callback=checkpoint_callback,
+    gpus=[0],
 )
 
 trainer.fit(model)

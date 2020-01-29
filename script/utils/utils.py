@@ -73,22 +73,7 @@ def get_mov_path(metadata, data_dir, fake_per_real=1, real_mov_num=500, train_si
     return train_mov_path, val_mov_path
 
 
-def get_img_from_mov(video_file):
-    # https://note.nkmk.me/python-opencv-videocapture-file-camera/
-    cap = cv2.VideoCapture(video_file)
-    frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    image_list = []
-    for i in range(frames):
-        _, image = cap.read()
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image_list.append(image)
-    cap.release()
-
-    return image_list
-
-
-def get_img_from_mov_2(video_file, num_img, frame_window):
+def get_img_from_mov(video_file, num_img, frame_window):
     # https://note.nkmk.me/python-opencv-videocapture-file-camera/
     cap = cv2.VideoCapture(video_file)
     frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -147,7 +132,6 @@ def plot_loss(df_loss, figname):
     plt.plot(df_loss['Val_loss'], label='Val')
     plt.legend()
     plt.savefig('../loss/{}.png'.format(figname))
-
 
 
 def freeze_until(net, param_name):
