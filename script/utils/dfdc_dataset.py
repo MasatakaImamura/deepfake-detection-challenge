@@ -185,13 +185,16 @@ class DeepfakeDataset_3d_realfake(Dataset):
         real_image_list = []
 
         for i in range(self.img_num):
-            _, image_real = cap_real.read()
+            try:
+                _, image_real = cap_real.read()
 
-            image_real = cv2.cvtColor(image_real, cv2.COLOR_BGR2RGB)
-            real_image_list.append(Image.fromarray(image_real))
-            cap_real.set(cv2.CAP_PROP_POS_FRAMES, (i + 1) * self.frame_window)
-            if cap_real.get(cv2.CAP_PROP_POS_FRAMES) >= frames:
-                break
+                image_real = cv2.cvtColor(image_real, cv2.COLOR_BGR2RGB)
+                real_image_list.append(Image.fromarray(image_real))
+                cap_real.set(cv2.CAP_PROP_POS_FRAMES, (i + 1) * self.frame_window)
+                if cap_real.get(cv2.CAP_PROP_POS_FRAMES) >= frames:
+                    break
+            except:
+                pass
         cap_real.release()
 
         # Detect Faces
@@ -220,13 +223,16 @@ class DeepfakeDataset_3d_realfake(Dataset):
         frames = int(cap_fake.get(cv2.CAP_PROP_FRAME_COUNT))
         fake_image_list = []
         for i in range(self.img_num):
-            _, image_fake = cap_fake.read()
+            try:
+                _, image_fake = cap_fake.read()
 
-            image_fake = cv2.cvtColor(image_fake, cv2.COLOR_BGR2RGB)
-            fake_image_list.append(Image.fromarray(image_fake))
-            cap_fake.set(cv2.CAP_PROP_POS_FRAMES, (i + 1) * self.frame_window)
-            if cap_fake.get(cv2.CAP_PROP_POS_FRAMES) >= frames:
-                break
+                image_fake = cv2.cvtColor(image_fake, cv2.COLOR_BGR2RGB)
+                fake_image_list.append(Image.fromarray(image_fake))
+                cap_fake.set(cv2.CAP_PROP_POS_FRAMES, (i + 1) * self.frame_window)
+                if cap_fake.get(cv2.CAP_PROP_POS_FRAMES) >= frames:
+                    break
+            except:
+                pass
         cap_fake.release()
 
         # Detect Faces

@@ -61,6 +61,7 @@ trainer = Trainer(
     min_epochs=5,
     default_save_path=output_path,
     checkpoint_callback=checkpoint_callback,
+    overfit_pct=0.1,
     gpus=[0],
 )
 
