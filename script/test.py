@@ -28,48 +28,73 @@ from efficientnet_pytorch import EfficientNet
 
 from models.blazeface import BlazeFace
 
+import pandas as pd
+import glob
+
 
 # Config  ################################################################
-data_dir = '../input'
-seed = 0
-img_size = 224
-batch_size = 4
-epoch = 8
-model_name = 'resnet152'
+data_dir = ['../input']
+output_dir_face = '../data/faces'
+output_dir_meta = '../data/meta'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-img_num = 14
-frame_window = 20
-real_mov_num = None
-cascade_path = '../haarcascade/haarcascade_frontalface_alt2.xml'
+img_num = 30
+window_size = 10
 
-# Set Seed
-seed_everything(seed)
-
-detector = MTCNN(image_size=img_size, margin=14, keep_all=False,
+detector = MTCNN(image_size=224, margin=14, keep_all=False,
                  select_largest=False, factor=0.5, device=device, post_process=False).eval()
 
-# Loss Function  ################################################################
-criterion = nn.BCEWithLogitsLoss(reduction='sum')
+# Get Metadata  ################################################################
+metadata = pd.DataFrame()
 
-# # Set Mov_file path  ################################################################
-# metadata = get_metadata(data_dir)
-# train_mov_path, val_mov_path = get_mov_path(metadata, data_dir, fake_per_real=1,
-#                                             real_mov_num=real_mov_num, train_size=0.9, seed=seed)
-#
-# imgs = get_img_from_mov(train_mov_path[0], num_img=5, frame_window=10)
+for d in data_dir:
+    meta = get_metadata(d)
+    metadata = pd.concat([metadata, meta], axis=0, ignore_index=True)
 
-# dataset = DeepfakeDataset_3d_realfake(data_dir, metadata, device, detector, img_num=14, img_size=224, frame_window=20)
-# dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
+metadata.to_csv(os.path.join(output_dir_meta, 'meta.csv'))
+
+all_mov_path = glob.glob('../input*/*.mp4')
 
 
-import torchvision.models as models
+for i in range(2):
 
-net = Facenet_3d()
-# print(net)
-#
-# for name, params in net.named_parameters():
-#     print(name)
+    target = metadata.iloc[i:i+1]
+    mov = target['mov'].values[0]
+    label = target['label'].values[0]
 
-freeze_until(net, "facenet.repeat_3.0.branch0.conv.weight")
+    mov_path = [p for p in all_mov_path if mov in p]
 
-print([params for params in net.parameters() if params.requires_grad])
+    cap = cv2.VideoCapture(mov_path[0])
+
+    frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    for i in range(img_num):
+        _, image = cap.read()
+
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        _image = image[np.newaxis, :, :, :]
+        boxes, probs = detector.detect(_image, landmarks=False)
+
+        x = int(boxes[0][0][0])
+        y = int(boxes[0][0][1])
+        z = int(boxes[0][0][2])
+        w = int(boxes[0][0][3])
+        image = image[y:w, x:z]
+
+        image = cv2.resize(image, (224, 224))
+
+        filename = f'{mov}_{label}_frame_{i * window_size}.jpg'
+
+        # cv2.imwrite(os.path.join(output_dir_face, filename), image, [cv2.IMWRITE_JPEG_QUALITY, 100])
+
+        image = Image.fromarray(image)
+        image.save(os.path.join(output_dir_face, filename))
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, (i + 1) * window_size)
+        if cap.get(cv2.CAP_PROP_POS_FRAMES) >= frames:
+            break
+    cap.release()
+
+    # os.remove(mov_path)
+
+
+
