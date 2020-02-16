@@ -263,7 +263,7 @@ class DeepfakeDataset(Dataset):
         self.img_size = img_size
 
     def __len__(self):
-        return len(self.faces_img_path)
+        return len(self.metadata)
 
     def __getitem__(self, idx):
 

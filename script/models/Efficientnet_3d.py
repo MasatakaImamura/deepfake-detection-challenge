@@ -68,8 +68,6 @@ class Efficientnet_3d(nn.Module):
         for m in self.base._blocks[:4]:
             x = m(x)
 
-        print(x.size())
-
         # 4次元に戻す
         _, c, w, h = x.shape
         x = x.view(-1, ns, c, w, h)

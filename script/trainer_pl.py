@@ -3,11 +3,11 @@ import pandas as pd
 
 import torch
 import torch.nn as nn
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.trainer import Trainer
 
-from .utils.lightning import DFDCLightningSystem
-from .models.Efficientnet_3d import Efficientnet_3d
+from utils.lightning import DFDCLightningSystem
+from models.Efficientnet_3d import Efficientnet_3d
 from utils.data_augumentation import GroupImageTransform
 
 # Config  ################################################################
@@ -38,12 +38,16 @@ model = DFDCLightningSystem(faces, metadata, net, device, transform, criterion, 
 
 checkpoint_callback = ModelCheckpoint(filepath='../lightning/ckpt', monitor='avg_val_loss',
                                       mode='min', save_weights_only=True)
+earlystopping_callback = EarlyStopping(monitor='val_loss', min_delta=0.0, patience=10)
+
 trainer = Trainer(
     max_epochs=epoch,
     min_epochs=5,
     default_save_path=output_path,
     checkpoint_callback=checkpoint_callback,
-    gpus=[0]
+    early_stop_callback=earlystopping_callback,
+    overfit_pct=0.1,
+    gpus=[0],
 )
 
 trainer.fit(model)

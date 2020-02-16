@@ -66,7 +66,7 @@ out = net(img)
 
 criterion = nn.BCEWithLogitsLoss()
 
-loss = criterion(out, label)
+loss = criterion(out, label.unsqueeze(1).float())
 
 print(loss)
 

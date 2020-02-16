@@ -442,13 +442,8 @@ class DFDCLightningSystem(pl.LightningModule):
         return [self.optimizer]
 
     def training_step(self, batch, batch_idx):
-
         inp, label = batch
-
-        b, f, c, w, h = inp.size()
-
-        # Convert (b, f, c, w, h) -> (b*f, c, w, h)
-        inp = inp.view(-1, c, w, h)
+        label = label.unsqueeze(1).float()
 
         pred = self.forward(inp)
 
@@ -466,11 +461,7 @@ class DFDCLightningSystem(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         inp, label = batch
-
-        b, f, c, w, h = inp.size()
-
-        # Convert (b, f, c, w, h) -> (b*f, c, w, h)
-        inp = inp.view(-1, c, w, h)
+        label = label.unsqueeze(1).float()
 
         pred = self.forward(inp)
 
