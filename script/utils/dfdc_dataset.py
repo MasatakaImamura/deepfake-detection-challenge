@@ -250,3 +250,46 @@ class DeepfakeDataset_3d_realfake(Dataset):
         face_f = torch.stack(face_f)  # (img_num, channel, img_size, img_size)
 
         return face_r, face_f
+
+
+
+class DeepfakeDataset(Dataset):
+
+    def __init__(self, faces_img_path, metadata, transform, phase='train', img_size=224):
+        self.faces_img_path = faces_img_path
+        self.metadata = metadata
+        self.transform = transform
+        self.phase = phase
+        self.img_size = img_size
+
+    def __len__(self):
+        return len(self.faces_img_path)
+
+    def __getitem__(self, idx):
+
+        img_name = self.metadata['mov'].unique().tolist()[idx]
+        # Extract Target Mov path only
+        target_mov_path = [path for path in self.faces_img_path if img_name in path]
+        # Each Image(PIL) get into List
+        img_list = []
+        for t in target_mov_path:
+            img_list.append(Image.open(t))
+
+        # Get Label
+        label = target_mov_path[0].split(sep)[1].split('_')[1]
+        if label == 'FAKE':
+            label = 1
+        else:
+            label = 0
+
+        # Transform Images
+        img_list = self.transform(img_list, self.phase)
+
+        # Remained only 15 Frame
+        if img_list.size(0) > 15:
+            img_list = img_list[:15, :, :, :]
+        elif img_list.size(0) < 15:
+            img_list = torch.randn(15, 3, self.img_size, self.img_size)
+            label = 1
+
+        return img_list, label

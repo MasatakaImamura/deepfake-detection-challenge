@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 
 # Config  ################################################################
-data_dir = ['../input', '../input_2']
+data_dir = ['../input']
 output_dir_face = '../data/faces_temp'
 output_dir_meta = '../data/meta'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -29,7 +29,7 @@ for d in data_dir:
     meta = get_metadata(d)
     metadata = pd.concat([metadata, meta], axis=0, ignore_index=True)
 
-metadata.to_csv(os.path.join(output_dir_meta, 'meta_0_31.csv'))
+metadata.to_csv(os.path.join(output_dir_meta, 'meta.csv'))
 
 # 動画全ファイルのパスを取得
 all_mov_path = glob.glob('../input*/*.mp4')

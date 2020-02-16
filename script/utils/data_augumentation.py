@@ -1,7 +1,8 @@
 import cv2
 import random
-
+import torch
 from torchvision import transforms
+from PIL import Image
 
 
 class Resize:
@@ -69,3 +70,56 @@ class ImageTransform:
 
     def __call__(self, img, phase):
         return self.data_transform[phase](img)
+
+
+# Group Img  ###########################################################################################################
+
+class GroupResize:
+    def __init__(self, size):
+        self.resize = transforms.Resize(size, interpolation=Image.BILINEAR)
+
+    def __call__(self, img_group):
+        return [self.resize(img) for img in img_group]
+
+
+class GroupToTensor:
+    def __init__(self):
+        self.totensor = transforms.ToTensor()
+
+    def __call__(self, img_group):
+        return [self.totensor(img) for img in img_group]
+
+
+class GroupNormalize:
+    def __init__(self, mean, std):
+        self.normalize = transforms.Normalize(mean, std)
+
+    def __call__(self, img_group):
+        return [self.normalize(img) for img in img_group]
+
+class Stack:
+    def __call__(self, img_group):
+        ret = torch.stack(img_group)
+        return ret
+
+
+class GroupImageTransform:
+
+    def __init__(self, size, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
+        self.transform = {
+            'train': transforms.Compose([
+                GroupResize(size),
+                GroupToTensor(),
+                GroupNormalize(mean, std),
+                Stack()
+            ]),
+            'val': transforms.Compose([
+                GroupResize(size),
+                GroupToTensor(),
+                GroupNormalize(mean, std),
+                Stack()
+            ])
+        }
+
+    def __call__(self, img_group, phase):
+        return self.transform[phase](img_group)
