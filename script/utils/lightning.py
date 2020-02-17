@@ -447,7 +447,7 @@ class DFDCLightningSystem(pl.LightningModule):
 
         pred = self.forward(inp)
 
-        loss = self.criterion(pred, label) / len(pred)
+        loss = self.criterion(pred, label)
 
         # Accuracy - Real Face
         pred = torch.sigmoid(pred.detach())
@@ -465,7 +465,7 @@ class DFDCLightningSystem(pl.LightningModule):
 
         pred = self.forward(inp)
 
-        loss = self.criterion(pred, label) / len(pred)
+        loss = self.criterion(pred, label)
 
         # Accuracy - Real Face
         pred = torch.sigmoid(pred.detach())

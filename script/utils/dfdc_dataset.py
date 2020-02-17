@@ -270,6 +270,13 @@ class DeepfakeDataset(Dataset):
         img_name = self.metadata['mov'].unique().tolist()[idx]
         # Extract Target Mov path only
         target_mov_path = [path for path in self.faces_img_path if img_name in path]
+
+        # If target_mov_path is empty, return random noise and label=1
+        if len(target_mov_path) == 0:
+            img_list = torch.randn(15, 3, self.img_size, self.img_size)
+            label = 1
+            return img_list, label
+
         # Each Image(PIL) get into List
         img_list = []
         for t in target_mov_path:
