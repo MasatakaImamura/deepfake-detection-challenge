@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import Normalize
 from PIL import Image
 
-from .utils import get_img_from_mov, get_img_from_mov, detect_face, detect_face_mtcnn
+from .utils import get_img_from_mov, detect_face, detect_face_mtcnn
 
 # OSの違いによるパス分割を定義
 if os.name == 'nt':
@@ -255,12 +255,13 @@ class DeepfakeDataset_3d_realfake(Dataset):
 
 class DeepfakeDataset(Dataset):
 
-    def __init__(self, faces_img_path, metadata, transform, phase='train', img_size=224):
+    def __init__(self, faces_img_path, metadata, transform, phase='train', img_size=224, img_num=15):
         self.faces_img_path = faces_img_path
         self.metadata = metadata
         self.transform = transform
         self.phase = phase
         self.img_size = img_size
+        self.img_num = img_num
 
     def __len__(self):
         return len(self.metadata)
@@ -274,29 +275,33 @@ class DeepfakeDataset(Dataset):
         # If target_mov_path is empty, return random noise and label=1
         if len(target_mov_path) == 0:
             img_list = torch.randn(15, 3, self.img_size, self.img_size)
-            label = 1
+            label = 1.0
             return img_list, label
 
         # Each Image(PIL) get into List
         img_list = []
         for t in target_mov_path:
-            img_list.append(Image.open(t))
+            img = Image.open(t)
+            img_list.append(img)
+
+        # Shuffle Image List
+        random.shuffle(img_list)
 
         # Get Label
         label = target_mov_path[0].split(sep)[1].split('_')[1]
         if label == 'FAKE':
-            label = 1
+            label = 1.0
         else:
-            label = 0
+            label = 0.0
 
         # Transform Images
         img_list = self.transform(img_list, self.phase)
 
-        # Remained only 15 Frame
-        if img_list.size(0) > 15:
-            img_list = img_list[:15, :, :, :]
-        elif img_list.size(0) < 15:
-            img_list = torch.randn(15, 3, self.img_size, self.img_size)
-            label = 1
+        # Remained only Img Num
+        if img_list.size(0) > self.img_num:
+            img_list = img_list[:self.img_num, :, :, :]
+        elif img_list.size(0) < self.img_num:
+            img_list = torch.randn(self.img_num, 3, self.img_size, self.img_size)
+            label = 1.0
 
         return img_list, label

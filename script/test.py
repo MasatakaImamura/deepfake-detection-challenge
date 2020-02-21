@@ -13,7 +13,6 @@ import torch.optim as optim
 import torchvision
 from torchvision import transforms
 
-from models.model_init import model_init, convLSTM, convLSTM_resnet
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov, freeze_until
 from utils.dfdc_dataset import DeepfakeDataset_3d, DeepfakeDataset_2d, DeepfakeDataset_3d_realfake, DeepfakeDataset
@@ -39,34 +38,52 @@ elif os.name == 'posix':
     sep = '/'
 
 # Config  ################################################################
-faces_dir = '../data/faces_temp'
-meta_dir = '../data/meta'
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-img_size = 120
+# faces_dir = '../data/faces_temp'
+# meta_dir = '../data/meta'
+# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# img_size = 120
+#
+# # Load Data
+# faces = glob.glob(os.path.join(faces_dir, '*.jpg'))
+# meta = pd.read_csv(os.path.join(meta_dir, 'meta.csv'))
+#
+# transform = GroupImageTransform(size=img_size)
+# dataset = DeepfakeDataset(faces, meta, transform, phase='train', img_size=img_size)
+# dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
+#
+# img, label = next(iter(dataloader))
+#
+# print(img.size())
+# print(label.size())
+# print(img)
+# print(img.max())
+# print(img.min())
+# img = img.to(device)
+# label = label.to(device)
+#
+# net = Efficientnet_3d(output_size=1)
+# net = net.to(device)
+#
+# out = net(img)
+#
+# criterion = nn.BCEWithLogitsLoss()
+#
+# loss = criterion(out, label.unsqueeze(1).float())
+#
+# print(loss)
 
-# Load Data
-faces = glob.glob(os.path.join(faces_dir, '*.jpg'))
-meta = pd.read_csv(os.path.join(meta_dir, 'meta.csv'))
 
-transform = GroupImageTransform(size=img_size)
-dataset = DeepfakeDataset(faces, meta, transform, phase='train', img_size=img_size)
-dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
+z = torch.randn((4, 1))
+print(z)
+print(z.size())
+z = z.numpy().reshape(-1)
+print(z)
+print(type(z))
+print(z.shape)
+for i in z:
+    print(i)
 
-img, label = next(iter(dataloader))
 
-print(img.size())
-print(label.size())
-img = img.to(device)
-label = label.to(device)
-
-net = Efficientnet_3d(output_size=1)
-net = net.to(device)
-
-out = net(img)
-
-criterion = nn.BCEWithLogitsLoss()
-
-loss = criterion(out, label.unsqueeze(1).float())
-
-print(loss)
-
+r = 654
+r = torch.tensor(r)
+print(r)

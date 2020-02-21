@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import log_loss
 
 import torch
 from torch import nn
@@ -12,8 +13,6 @@ from pytorch_lightning import Trainer
 
 from .utils import get_metadata, get_mov_path, freeze_until
 from .dfdc_dataset import DeepfakeDataset_3d, DeepfakeDataset_3d_realfake, DeepfakeDataset
-
-from facenet_pytorch import training, fixed_image_standardization
 
 
 class LightningSystem_3d(pl.LightningModule):
@@ -384,12 +383,15 @@ class LightningSystem_realfake(pl.LightningModule):
 
 class DFDCLightningSystem(pl.LightningModule):
 
-    def __init__(self, faces, metadata, net, device, transform, criterion, img_num, img_size, batch_size):
+    def __init__(self, faces, metadata, net, device, transform, criterion, optimizer,
+                 scheduler, img_num, img_size, batch_size):
         super(DFDCLightningSystem, self).__init__()
         self.faces = faces
         self.metadata = metadata
         self.net = net
         self.device = device
+        self.optimizer = optimizer
+        self.scheduler = scheduler
         self.img_num = img_num
         self.img_size = img_size
         self.batch_size = batch_size
@@ -398,11 +400,11 @@ class DFDCLightningSystem(pl.LightningModule):
 
         # Dataset  ################################################################
         self.train_dataset = DeepfakeDataset(
-            faces, metadata, transform, phase='train', img_size=self.img_size
+            faces, metadata, transform, phase='train', img_size=self.img_size, img_num=self.img_num
         )
 
         self.val_dataset = DeepfakeDataset(
-            faces, metadata, transform, phase='val', img_size=self.img_size
+            faces, metadata, transform, phase='val', img_size=self.img_size, img_num=self.img_num
         )
 
         # Set Sampler
@@ -417,9 +419,6 @@ class DFDCLightningSystem(pl.LightningModule):
         # Fine Tuning  ###############################################################
         # EfficientNet-b4
         # freeze_until(self.net, "_blocks.28._expand_conv.weight")
-
-        # Optimizer  ################################################################
-        self.optimizer = optim.Adam(params=self.net.parameters(), lr=1e-3)
 
     @pl.data_loader
     def train_dataloader(self):
@@ -439,7 +438,7 @@ class DFDCLightningSystem(pl.LightningModule):
         return self.net(x)
 
     def configure_optimizers(self):
-        return [self.optimizer]
+        return [self.optimizer], [self.scheduler]
 
     def training_step(self, batch, batch_idx):
         inp, label = batch
@@ -449,11 +448,11 @@ class DFDCLightningSystem(pl.LightningModule):
 
         loss = self.criterion(pred, label)
 
-        # Accuracy - Real Face
+        # Accuracy
         pred = torch.sigmoid(pred.detach())
         pred[pred > 0.5] = 1.0
         pred[pred < 0.5] = 0.0
-        acc = torch.sum(pred == label).float() / self.img_num / pred.size(0)
+        acc = torch.sum(pred == label).float() / pred.size(0)
 
         logs = {'train/loss': loss, 'train/acc': acc}
 
@@ -467,20 +466,36 @@ class DFDCLightningSystem(pl.LightningModule):
 
         loss = self.criterion(pred, label)
 
-        # Accuracy - Real Face
+        # Accuracy
         pred = torch.sigmoid(pred.detach())
         pred[pred > 0.5] = 1.0
         pred[pred < 0.5] = 0.0
-        acc = torch.sum(pred == label).float() / self.img_num / pred.size(0)
+        acc = torch.sum(pred == label).float() / pred.size(0)
 
-        return {'val_loss': loss, 'val_acc': acc}
+        # LogLoss
+        logloss = 0
+        _label = label.cpu().numpy().reshape(-1)
+        _pred = pred.cpu().numpy().reshape(-1)
+        eps = 1e-10
+        _pred = np.clip(_pred, eps, 1 - eps)
+
+        for p, r in zip(_pred, _label):
+            if r == 0:
+                logloss += np.log(1 - _pred)
+            elif r == 1:
+                logloss += np.log(_pred)
+
+        logloss = torch.tensor(logloss)
+
+        return {'val_loss': loss, 'val_acc': acc, 'val_logloss': logloss}
 
     def validation_end(self, outputs):
 
         avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         avg_val_acc = torch.stack([x['val_acc'] for x in outputs]).mean()
+        avg_val_logloss = torch.stack([x['val_logloss'] for x in outputs]).mean()
 
-        logs_val = {'val/loss': avg_val_loss, 'val/acc': avg_val_acc}
+        logs_val = {'val/loss': avg_val_loss, 'val/acc': avg_val_acc, 'val/logloss': avg_val_logloss}
         # show val_loss and val_acc in progress bar but only log val_loss
         results = {
             'avg_val_loss': avg_val_loss,

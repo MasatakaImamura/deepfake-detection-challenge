@@ -3,7 +3,7 @@ from efficientnet_pytorch import EfficientNet
 
 
 class Resnet_3D(nn.Module):
-    '''Resnet_3D_1'''
+    '''Resnet_3D'''
 
     def __init__(self, input_size=160, output_size=256):
         super(Resnet_3D, self).__init__()
@@ -49,7 +49,6 @@ class Efficientnet_3d(nn.Module):
 
         self.base = EfficientNet.from_pretrained('efficientnet-b0', num_classes=output_size)
         self.resnet_3d_1 = Resnet_3D(input_size=40, output_size=96)
-        self.resnet_3d_2 = Resnet_3D(input_size=96, output_size=96)
         self.global_pool = nn.AdaptiveAvgPool3d(output_size=(1, 1, 1))
         self.fc_1 = nn.Linear(96, 64, bias=True)
         self.dropout = nn.Dropout(0.5)
@@ -60,8 +59,6 @@ class Efficientnet_3d(nn.Module):
         # 3次元に圧縮
         x = x.view(-1, c, h, w)
 
-        # Efficientnet-b4の0-22層目まで通す
-        # Output_size -> (bs, 160, 14, 14)
         x = self.base._conv_stem(x)
         x = self.base._bn0(x)
 
@@ -74,7 +71,6 @@ class Efficientnet_3d(nn.Module):
         x = x.transpose(2, 1)
 
         x = self.resnet_3d_1(x)
-        x = self.resnet_3d_2(x)
 
         x = self.global_pool(x)
         x = x.squeeze()

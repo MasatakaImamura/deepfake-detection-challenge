@@ -2,7 +2,8 @@ import os, glob
 import pandas as pd
 
 import torch
-import torch.nn as nn
+from torch import nn, optim
+from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ReduceLROnPlateau
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.trainer import Trainer
 
@@ -17,7 +18,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = nn.BCEWithLogitsLoss()
 img_num = 15
 batch_size = 4
-img_size = 224
+img_size = 120
 epoch = 100
 
 # Load Data  ##################################################################
@@ -30,19 +31,25 @@ transform = GroupImageTransform(size=img_size)
 # Model  ##################################################################
 net = Efficientnet_3d(output_size=1)
 
+# Optimizer  ################################################################
+optimizer = optim.Adam(params=net.parameters(), lr=1e-3)
+scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
+
 # Pytorch Lightning
 # Train  ##################################################################
 output_path = '../lightning'
 
-model = DFDCLightningSystem(faces, metadata, net, device, transform, criterion, img_num, img_size, batch_size)
+model = DFDCLightningSystem(faces, metadata, net, device, transform, criterion,
+                            optimizer, scheduler, img_num, img_size, batch_size)
 
 checkpoint_callback = ModelCheckpoint(filepath='../lightning/ckpt', monitor='avg_val_loss',
                                       mode='min', save_weights_only=True)
-earlystopping_callback = EarlyStopping(monitor='val_loss', min_delta=0.0, patience=10)
+
+earlystopping_callback = EarlyStopping(monitor='avg_val_loss', patience=20, mode='min')
 
 trainer = Trainer(
     max_epochs=epoch,
-    min_epochs=5,
+    min_epochs=10,
     default_save_path=output_path,
     checkpoint_callback=checkpoint_callback,
     early_stop_callback=earlystopping_callback,

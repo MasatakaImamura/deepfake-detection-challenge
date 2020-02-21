@@ -228,3 +228,15 @@ def xception(num_classes=1000, pretrained='imagenet'):
     model.last_linear = model.fc
     del model.fc
     return model
+
+
+if __name__ == '__main__':
+
+    model = Xception()
+
+    print(model)
+
+    z = torch.randn(4, 3, 299, 299)
+
+    out = model(z)
+    print(out.size())
