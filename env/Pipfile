@@ -20,6 +20,7 @@ tqdm = "*"
 facenet-pytorch = "*"
 pytorch-lightning = "*"
 tensorboard = "*"
+tensorboardx = "*"
 
 [requires]
 python_version = "3.7"

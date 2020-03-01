@@ -15,8 +15,8 @@ from torchvision import transforms
 
 from utils.data_augumentation import ImageTransform
 from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov, freeze_until
-from utils.dfdc_dataset import DeepfakeDataset_3d, DeepfakeDataset_2d, DeepfakeDataset_3d_realfake, DeepfakeDataset
-from utils.data_augumentation import GroupImageTransform
+from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_per_img
+from utils.data_augumentation import GroupImageTransform, ImageTransform
 # from utils.trainer import train_model
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from models.mesonet import Meso4, MesoInception4
@@ -24,7 +24,7 @@ from utils.logger import create_logger, get_logger
 
 from models.Facenet_3d import Facenet_3d
 
-from models.Efficientnet_3d import Efficientnet_3d
+from models.Efficientnet_3d import Efficientnet_3d, Efficientnet_2d
 from efficientnet_pytorch import EfficientNet
 
 import pandas as pd
@@ -37,53 +37,32 @@ if os.name == 'nt':
 elif os.name == 'posix':
     sep = '/'
 
-# Config  ################################################################
+# 動画全ファイルのパスを取得
 # faces_dir = '../data/faces_temp'
-# meta_dir = '../data/meta'
-# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# img_size = 120
-#
-# # Load Data
 # faces = glob.glob(os.path.join(faces_dir, '*.jpg'))
-# meta = pd.read_csv(os.path.join(meta_dir, 'meta.csv'))
-#
-# transform = GroupImageTransform(size=img_size)
-# dataset = DeepfakeDataset(faces, meta, transform, phase='train', img_size=img_size)
-# dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
-#
-# img, label = next(iter(dataloader))
-#
-# print(img.size())
-# print(label.size())
-# print(img)
-# print(img.max())
-# print(img.min())
-# img = img.to(device)
-# label = label.to(device)
-#
-# net = Efficientnet_3d(output_size=1)
-# net = net.to(device)
-#
-# out = net(img)
-#
-# criterion = nn.BCEWithLogitsLoss()
-#
-# loss = criterion(out, label.unsqueeze(1).float())
-#
-# print(loss)
 
 
-z = torch.randn((4, 1))
-print(z)
-print(z.size())
-z = z.numpy().reshape(-1)
-print(z)
-print(type(z))
-print(z.shape)
-for i in z:
-    print(i)
+transform = ImageTransform(120)
+
+target = '../data/faces_temp/aaagqkcdis.mp4_FAKE_frame_0.jpg'
+
+img_pil = Image.open(target)
+
+img_pil = np.array(img_pil)
+
+img_cv = cv2.imread(target)
+img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+
+img_cv_pil = Image.fromarray(img_cv)
+img_cv_pil =transform(img_cv_pil, 'train')
+img_cv_pil *= 255.
 
 
-r = 654
-r = torch.tensor(r)
-print(r)
+print(img_pil)
+print('&&&&&&&&&&&&&&&&&&&&&&')
+print(img_cv)
+print('&&&&&&&&&&&&&&&&&&&&&&')
+print(img_cv_pil.permute(1, 2, 0))
+
+print(img_pil.shape)
+print(img_cv.shape)

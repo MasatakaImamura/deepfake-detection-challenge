@@ -5,68 +5,52 @@ from torchvision import transforms
 from PIL import Image
 
 
-class Resize:
-    def __init__(self, size=300):
-        self.size = size
-
-    def __call__(self, image):
-        image = cv2.resize(image, (self.size, self.size))
-        return image
-
-
-class RandomFlip:
+# for dim=3
+class NormalizeOrg:
     def __init__(self):
         pass
 
     def __call__(self, image):
-        r = random.choice([0, 1, -1, 999])
-        if r != 999:
-            image = cv2.flip(image, r)
-        else:
-            pass
-        return image
+        return ((image * 255) - 127.5) / 128.0
 
 
-class RandomRotate:
-    def __init__(self):
-        pass
-
-    def __call__(self, image):
-        r = random.choice([0, 1, 2, 3])
-
-        # 時計回り
-        if r == 1:
-            image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
-        # 反時計回り
-        elif r == 2:
-            image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        # 180°
-        elif r == 3:
-            image = cv2.rotate(image, cv2.ROTATE_180)
-        else:
-            pass
-
-        return image
-
-
-# Data Augumentation
 class ImageTransform:
-    def __init__(self, resize, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
+    def __init__(self, size):
         self.data_transform = {
             'train': transforms.Compose([
-                Resize(resize),
+                transforms.Resize(size, interpolation=Image.BILINEAR),
+                # RandomFlip(),
+                # RandomRotate(),
+                transforms.ToTensor(),
+                NormalizeOrg(),
+            ]),
+            'val': transforms.Compose([
+                transforms.Resize(size, interpolation=Image.BILINEAR),
+                transforms.ToTensor(),
+                NormalizeOrg(),
+            ])
+        }
+
+    def __call__(self, img, phase):
+        return self.data_transform[phase](img)
+
+
+class ImageTransform_2:
+    def __init__(self, size, mean, std):
+        self.data_transform = {
+            'train': transforms.Compose([
+                transforms.Resize(size, interpolation=Image.BILINEAR),
                 # RandomFlip(),
                 # RandomRotate(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]),
             'val': transforms.Compose([
-                Resize(resize),
+                transforms.Resize(size, interpolation=Image.BILINEAR),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ])
         }
-        self.size = resize
 
     def __call__(self, img, phase):
         return self.data_transform[phase](img)
@@ -108,7 +92,6 @@ class Stack:
 
 
 class GroupImageTransform:
-
     def __init__(self, size):
         self.transform = {
             'train': transforms.Compose([

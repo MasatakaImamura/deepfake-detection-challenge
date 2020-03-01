@@ -8,10 +8,10 @@ from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ReduceLROnPlatea
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.trainer import Trainer
 
-from utils.lightning import DFDCLightningSystem
-from models.Efficientnet_3d import Efficientnet_3d
+from utils.lightning import DFDCLightningSystem, DFDCLightningSystem_centerloss, DFDCLightningSystem_2d
+from models.Efficientnet_3d import Efficientnet_3d, Efficientnet_3d_centerloss, Efficientnet_2d
 from models.Facenet_3d import Facenet_3d
-from utils.data_augumentation import GroupImageTransform
+from utils.data_augumentation import GroupImageTransform, ImageTransform
 
 
 class criterion1:
@@ -26,7 +26,6 @@ faces_dir = '../data/faces_temp'
 meta_dir = '../data/meta'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 criterion = criterion1()
-img_num = 15
 batch_size = 4
 img_size = 120
 epoch = 100
@@ -36,10 +35,10 @@ faces = glob.glob(os.path.join(faces_dir, '*.jpg'))
 metadata = pd.read_csv(os.path.join(meta_dir, 'meta.csv'))
 
 # ImageTransform  ##################################################################
-transform = GroupImageTransform(size=img_size)
+transform = ImageTransform(size=img_size)
 
 # Model  ##################################################################
-net = Facenet_3d(output_size=1)
+net = Efficientnet_2d(output_size=1, model_name='efficientnet-b7')
 
 # Optimizer  ################################################################
 optimizer = optim.Adam(params=net.parameters(), lr=1e-3)
@@ -49,8 +48,8 @@ scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
 # Train  ##################################################################
 output_path = '../lightning'
 
-model = DFDCLightningSystem(faces, metadata, net, device, transform, criterion,
-                            optimizer, scheduler, img_num, img_size, batch_size)
+model = DFDCLightningSystem_2d(faces, metadata, net, device, transform, criterion,
+                            optimizer, scheduler, batch_size)
 
 checkpoint_callback = ModelCheckpoint(filepath='../lightning/ckpt_3', monitor='avg_val_loss',
                                       mode='min', save_weights_only=True)
@@ -63,7 +62,7 @@ trainer = Trainer(
     default_save_path=output_path,
     checkpoint_callback=checkpoint_callback,
     early_stop_callback=earlystopping_callback,
-    overfit_pct=0.1,
+    overfit_pct=0.02,
     gpus=[0],
 )
 

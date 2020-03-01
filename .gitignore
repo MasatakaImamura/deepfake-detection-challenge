@@ -2,6 +2,8 @@ input/
 input_2/
 input_3/
 model/
+weights/*
+tensorboard/*
 env/.venv/*
 __pycache__
 .ipynb_checkpoints
