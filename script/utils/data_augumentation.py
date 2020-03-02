@@ -40,8 +40,8 @@ class ImageTransform_2:
         self.data_transform = {
             'train': transforms.Compose([
                 transforms.Resize(size, interpolation=Image.BILINEAR),
-                # RandomFlip(),
-                # RandomRotate(),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]),

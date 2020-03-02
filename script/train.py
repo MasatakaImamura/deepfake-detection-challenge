@@ -21,6 +21,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-exp', '--experiencename')
 parser.add_argument('-m', '--modelname')
 parser.add_argument('-b', '--batchsize', type=int, default=4)
+parser.add_argument('-bn', '--batchnum', type=int, default=10000)
 parser.add_argument('-ims', '--imgsize', type=int, default=120)
 args = parser.parse_args()
 
@@ -32,7 +33,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 exp = args.experiencename
 img_num = 15
 batch_size = args.batchsize
-batch_num = 10000
+batch_num = args.batchnum
 img_size = args.imgsize
 epoch = 100
 mean = (0.485, 0.456, 0.406)

@@ -1,0 +1,1 @@
+python train.py -exp efficientnet_b0_1 -m efficientnet-b0 -b 32 -ims 120

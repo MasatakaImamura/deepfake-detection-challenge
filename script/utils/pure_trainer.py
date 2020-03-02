@@ -12,6 +12,8 @@ def train_model(dataloaders, net, device, optimizer, scheduler, batch_num,
                 num_epochs, exp='test0', saveweightpath='../weights'):
 
     print('DeepFake Detection Challenge Training Model')
+    train_i = 0
+    val_i = 0
 
     net = net.to(device)
     writer = SummaryWriter(f'../tensorboard/{exp}')
@@ -22,10 +24,11 @@ def train_model(dataloaders, net, device, optimizer, scheduler, batch_num,
 
     for epoch in range(num_epochs):
         print('#'*30)
-        bce_loss = 0
-        total_examples = 0
 
         for phase in ['train', 'val']:
+
+            bce_loss = 0
+            total_examples = 0
 
             if phase == 'train':
                 net.train()
@@ -34,25 +37,39 @@ def train_model(dataloaders, net, device, optimizer, scheduler, batch_num,
 
             for i, (img, label) in enumerate(dataloaders[phase]):
 
-                optimizer.zero_grad()
-
-                img = img.to(device)
-                label = label.to(device).float()
-
-                pred = net(img)
-                pred = pred.squeeze()
-
-                loss = F.binary_cross_entropy_with_logits(pred, label)
-
                 if phase == 'train':
+                    optimizer.zero_grad()
+                    img = img.to(device)
+                    label = label.to(device).float()
+
+                    pred = net(img)
+                    pred = pred.squeeze()
+
+                    loss = F.binary_cross_entropy_with_logits(pred, label)
+
                     loss.backward()
                     optimizer.step()
+
+                else:
+                    with torch.no_grad():
+                        img = img.to(device)
+                        label = label.to(device).float()
+
+                        pred = net(img)
+                        pred = pred.squeeze()
+
+                        loss = F.binary_cross_entropy_with_logits(pred, label)
 
                 bce_loss += loss.item() * img.size(0)
                 total_examples += img.size(0)
 
                 # Tensorboard
-                writer.add_scalar(f'{phase}/batch_loss', loss, i)
+                if phase == 'train':
+                    writer.add_scalar('train/batch_loss', loss, train_i)
+                    train_i += 1
+                else:
+                    writer.add_scalar('val/batch_loss', loss, val_i)
+                    val_i += 1
 
                 if phase == 'train' and i > batch_num:
                     break
