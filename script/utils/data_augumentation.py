@@ -39,14 +39,14 @@ class ImageTransform_2:
     def __init__(self, size, mean, std):
         self.data_transform = {
             'train': transforms.Compose([
-                transforms.Resize(size, interpolation=Image.BILINEAR),
+                transforms.Resize((size, size), interpolation=Image.BILINEAR),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]),
             'val': transforms.Compose([
-                transforms.Resize(size, interpolation=Image.BILINEAR),
+                transforms.Resize((size, size), interpolation=Image.BILINEAR),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ])

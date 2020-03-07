@@ -12,9 +12,7 @@ def train_model(dataloaders, net, device, optimizer, scheduler, batch_num,
                 num_epochs, exp='test0', saveweightpath='../weights'):
 
     print('DeepFake Detection Challenge Training Model')
-    train_i = 0
-    val_i = 0
-
+    train_i, val_i = 0, 0
     net = net.to(device)
     writer = SummaryWriter(f'../tensorboard/{exp}')
     best_loss = 1e+9
@@ -28,6 +26,7 @@ def train_model(dataloaders, net, device, optimizer, scheduler, batch_num,
         for phase in ['train', 'val']:
 
             bce_loss = 0
+            accuracy = 0
             total_examples = 0
 
             if phase == 'train':
@@ -36,7 +35,9 @@ def train_model(dataloaders, net, device, optimizer, scheduler, batch_num,
                 net.eval()
 
             for i, (img, label) in enumerate(dataloaders[phase]):
+                batch_size = img.size(0)
 
+                # Training
                 if phase == 'train':
                     optimizer.zero_grad()
                     img = img.to(device)
@@ -45,11 +46,18 @@ def train_model(dataloaders, net, device, optimizer, scheduler, batch_num,
                     pred = net(img)
                     pred = pred.squeeze()
 
+                    # Binary Cross Entropy
                     loss = F.binary_cross_entropy_with_logits(pred, label)
-
                     loss.backward()
                     optimizer.step()
 
+                    # Accuracy
+                    pred = torch.sigmoid(pred.detach())
+                    pred[pred > 0.5] = 1.0
+                    pred[pred < 0.5] = 0.0
+                    acc = torch.sum(pred == label).float() / pred.size(0)
+
+                # Validation
                 else:
                     with torch.no_grad():
                         img = img.to(device)
@@ -60,25 +68,36 @@ def train_model(dataloaders, net, device, optimizer, scheduler, batch_num,
 
                         loss = F.binary_cross_entropy_with_logits(pred, label)
 
-                bce_loss += loss.item() * img.size(0)
-                total_examples += img.size(0)
+                        # Accuracy
+                        pred = torch.sigmoid(pred.detach())
+                        pred[pred > 0.5] = 1.0
+                        pred[pred < 0.5] = 0.0
+                        acc = torch.sum(pred == label).float() / pred.size(0)
+
+                bce_loss += loss.item() * batch_size
+                accuracy += acc.item() * batch_size
+                total_examples += batch_size
 
                 # Tensorboard
                 if phase == 'train':
                     writer.add_scalar('train/batch_loss', loss, train_i)
+                    writer.add_scalar('train/batch_acc', acc, train_i)
                     train_i += 1
                 else:
                     writer.add_scalar('val/batch_loss', loss, val_i)
+                    writer.add_scalar('val/batch_acc', acc, val_i)
                     val_i += 1
 
                 if phase == 'train' and i > batch_num:
                     break
 
             bce_loss /= total_examples
+            accuracy /= total_examples
 
             # Tensorboard
             writer.add_scalar(f'{phase}/epoch_loss', bce_loss, epoch)
-            print(f'Epoch {epoch}  {phase} BCELoss: {bce_loss:.4f}')
+            writer.add_scalar(f'{phase}/epoch_acc', accuracy, epoch)
+            print(f'Epoch {epoch}  {phase} BCELoss: {bce_loss:.4f} Accuracy: {accuracy:.4f}')
 
             if phase == 'val' and bce_loss < best_loss:
                 best_loss = bce_loss

@@ -12,11 +12,11 @@ from torchvision.transforms import Normalize
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ExponentialLR
 from efficientnet_pytorch import EfficientNet
 
-from utils.dfdc_dataset import DeepfakeDataset_per_img
+from utils.dfdc_dataset import DeepfakeDataset_per_img_2
 from utils.data_augumentation import ImageTransform_2
 from utils.pure_trainer import train_model
 from utils.radam import RAdam
-from .utils.utils import seed_everything
+from utils.utils import seed_everything
 
 import torchvision.models as models
 
@@ -62,20 +62,21 @@ seed = 0
 
 seed_everything(seed)
 
-
 # Load Data  ##################################################################
 faces = glob.glob(os.path.join(faces_dir, '*.jpg'))
-metadata = pd.read_csv(os.path.join(meta_dir, 'meta.csv'))
+metadata = pd.read_csv(os.path.join(meta_dir, 'meta2.csv'))
 
 # ImageTransform  ##################################################################
 transform = ImageTransform_2(size=img_size, mean=mean, std=std)
 
 # Dataset, DataLoader  ##################################################################
-random.shuffle(faces)
 train_size = 0.9
+metadata = metadata.sample(frac=1).reset_index(drop=True)
+train_meta = metadata.iloc[:int(len(metadata)*train_size), :]
+val_meta = metadata.iloc[int(len(metadata)*train_size):, :]
 
-train_dataset = DeepfakeDataset_per_img(faces[:int(len(faces) * train_size)], metadata, transform, 'train')
-val_dataset = DeepfakeDataset_per_img(faces[int(len(faces) * train_size):], metadata, transform, 'val')
+train_dataset = DeepfakeDataset_per_img_2(faces, train_meta, transform, 'train', sample_size=10000)
+val_dataset = DeepfakeDataset_per_img_2(faces, val_meta, transform, 'val', sample_size=1000)
 
 dataloaders = {
     'train': DataLoader(train_dataset, batch_size=batch_size, shuffle=True),

@@ -1,1 +1,21 @@
-python train.py -exp efficientnet_b0_1 -m efficientnet-b0 -b 32 -ims 120
+# Efficientnet
+python train.py -exp efficientnet_b0_1 -m efficientnet-b0 -b 128 -bn 1000 -ims 120 -sch step -opt adam
+python train.py -exp efficientnet_b0_2 -m efficientnet-b0 -b 128 -bn 200 -ims 120 -sch step -opt radam
+python train.py -exp efficientnet_b0_3 -m efficientnet-b0 -b 64 -bn 200 -ims 120 -sch exp -opt radam
+python train.py -exp efficientnet_b0_4 -m efficientnet-b0 -b 64 -bn 200 -ims 120 -sch exp -opt sgd -lr 0.01
+
+
+python train.py -exp efficientnet_b4_1 -m efficientnet-b4 -b 64 -bn 200 -ims 120 -sch step -opt radam
+
+
+
+
+# Resnext
+python train.py -exp resnext50_1 -m resnext -b 128 -bn 1000 -ims 120
+
+
+
+# train_2
+
+# Efficientnet
+python train_2.py -exp efficientnet_b0_5 -m efficientnet-b0 -b 128 -bn 10000 -ims 120 -sch step -opt adam
