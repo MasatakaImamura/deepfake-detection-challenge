@@ -1,22 +1,35 @@
 # Efficientnet-b0
-python train.py -exp efficientnet_b0_1 -m efficientnet-b0 -b 128 -bn 1000 -ims 120 -sch step -opt adam
-python train.py -exp efficientnet_b0_2 -m efficientnet-b0 -b 128 -bn 200 -ims 120 -sch step -opt radam
-python train.py -exp efficientnet_b0_3 -m efficientnet-b0 -b 64 -bn 200 -ims 120 -sch exp -opt radam
+python train.py -exp efficientnet_b0_1 -m efficientnet-b0 -b 128 -bn 1000 -ims 120 -sch step -opt adam -tr 1
+python train.py -exp efficientnet_b0_2 -m efficientnet-b0 -b 128 -bn 200 -ims 120 -sch step -opt radam -tr 1
+python train.py -exp efficientnet_b0_3 -m efficientnet-b0 -b 64 -bn 200 -ims 120 -sch exp -opt radam -tr 1
 # sgdは微妙
-python train.py -exp efficientnet_b0_4 -m efficientnet-b0 -b 64 -bn 200 -ims 120 -sch exp -opt sgd -lr 0.01
+python train.py -exp efficientnet_b0_4 -m efficientnet-b0 -b 64 -bn 200 -ims 120 -sch exp -opt sgd -lr 0.01 -tr 1
 
 # train_2.pyはDatasetを変えてみた
-python train_2.py -exp efficientnet_b0_5 -m efficientnet-b0 -b 128 -bn 10000 -ims 120 -sch step -opt adam
-python train_2.py -exp efficientnet_b0_6 -m efficientnet-b0 -b 64 -bn 10000 -ims 120 -sch step -opt radam
+python train_2.py -exp efficientnet_b0_5 -m efficientnet-b0 -b 128 -bn 10000 -ims 120 -sch step -opt adam -tr 1
+0.44069
+
+python train_2.py -exp efficientnet_b0_6 -m efficientnet-b0 -b 64 -bn 10000 -ims 120 -sch step -opt radam -tr 1
+0.43766
+
+# augmentationにランダムエライズを追加
+python train_2.py -exp efficientnet_b0_7 -m efficientnet-b0 -b 100 -bn 10000 -ims 120 -sch step -opt radam -tr 2
+
+
+# Centerlossを追加
+python train_centerloss.py -exp efficientnet_b0_8 -m efficientnet-b0 -b 64 -bn 10000 -ims 120 -sch step -opt radam -tr 1
+
 
 # Efficientnet-b4
-python train.py -exp efficientnet_b4_1 -m efficientnet-b4 -b 64 -bn 200 -ims 120 -sch step -opt radam
+python train.py -exp efficientnet_b4_1 -m efficientnet-b4 -b 64 -bn 200 -ims 120 -sch step -opt radam -tr 1
+python train_2.py -exp efficientnet_b4_2 -m efficientnet-b4 -b 64 -bn 10000 -ims 120 -sch exp -opt radam -tr 1
+0.46
+オーバーフィットする
 
 
 
-
-# Resnext
-python train.py -exp resnext50_1 -m resnext -b 128 -bn 1000 -ims 120
+# Resnet34
+python train_2.py -exp resnet34_1 -m resnet34 -b 64 -bn 10000 -ims 120 -sch step -opt radam -tr 1
 
 
 

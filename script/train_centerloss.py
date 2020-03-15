@@ -15,9 +15,10 @@ from efficientnet_pytorch import EfficientNet
 
 from utils.dfdc_dataset import DeepfakeDataset_per_img_2
 from utils.data_augumentation import ImageTransform, ImageTransform_2
-from utils.pure_trainer import train_model
+from utils.pure_trainer import train_model, train_model_centerloss
 from utils.radam import RAdam
 from utils.utils import seed_everything
+from models.Efficientnet import Efficientnet_centerloss
 
 import torchvision.models as models
 
@@ -92,16 +93,7 @@ dataloaders = {
 # Model  #########################################################################
 net = None
 if 'efficientnet' in args.modelname:
-    net = EfficientNet.from_pretrained(args.modelname, num_classes=1)
-elif 'resnext' in args.modelname:
-    checkpoint = torch.load('../weights/resnext50_32x4d-7cdf4587.pth')
-    net = MyResNeXt(checkpoint)
-elif 'resnet34' in args.modelname:
-    net = torchvision.models.resnet34(pretrained=True)
-    net.fc = nn.Linear(in_features=net.fc.in_features, out_features=1)
-elif 'resnet50' in args.modelname:
-    net = torchvision.models.resnet50(pretrained=True)
-    net.fc = nn.Linear(in_features=net.fc.in_features, out_features=1)
+    net = Efficientnet_centerloss(output_size=1, model_name=args.modelname)
 
 # Optimizer
 optimizer = None
@@ -120,5 +112,5 @@ elif 'exp' in args.scheduler:
     scheduler = ExponentialLR(optimizer, gamma=0.95)
 
 # Train  #########################################################################
-train_model(dataloaders, net, device, optimizer, scheduler, batch_num, num_epochs=epoch, exp=exp)
+train_model_centerloss(dataloaders, net, device, optimizer, scheduler, batch_num, num_epochs=epoch, exp=exp)
 

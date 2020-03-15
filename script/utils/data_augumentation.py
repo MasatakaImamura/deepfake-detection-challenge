@@ -15,27 +15,6 @@ class NormalizeOrg:
 
 
 class ImageTransform:
-    def __init__(self, size):
-        self.data_transform = {
-            'train': transforms.Compose([
-                transforms.Resize(size, interpolation=Image.BILINEAR),
-                # RandomFlip(),
-                # RandomRotate(),
-                transforms.ToTensor(),
-                NormalizeOrg(),
-            ]),
-            'val': transforms.Compose([
-                transforms.Resize(size, interpolation=Image.BILINEAR),
-                transforms.ToTensor(),
-                NormalizeOrg(),
-            ])
-        }
-
-    def __call__(self, img, phase):
-        return self.data_transform[phase](img)
-
-
-class ImageTransform_2:
     def __init__(self, size, mean, std):
         self.data_transform = {
             'train': transforms.Compose([
@@ -54,6 +33,36 @@ class ImageTransform_2:
 
     def __call__(self, img, phase):
         return self.data_transform[phase](img)
+
+
+class ImageTransform_2:
+    def __init__(self, size, mean, std):
+        self.data_transform = {
+            'train': transforms.Compose([
+                transforms.Resize((size, size), interpolation=Image.BILINEAR),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(mean, std),
+                transforms.RandomErasing()
+            ]),
+            'val': transforms.Compose([
+                transforms.Resize((size, size), interpolation=Image.BILINEAR),
+                transforms.ToTensor(),
+                transforms.Normalize(mean, std),
+            ])
+        }
+
+    def __call__(self, img, phase):
+        return self.data_transform[phase](img)
+
+
+
+
+
+
+
+
 
 
 # Group Img  ###########################################################################################################

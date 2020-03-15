@@ -25,7 +25,7 @@ from utils.logger import create_logger, get_logger
 
 from models.Facenet_3d import Facenet_3d
 
-from models.Efficientnet_3d import Efficientnet_3d, Efficientnet_2d
+from models.Efficientnet import Efficientnet_3d
 from efficientnet_pytorch import EfficientNet
 
 import pandas as pd
@@ -43,44 +43,6 @@ meta_dir = '../data/meta'
 mean = (0.485, 0.456, 0.406)
 std = (0.229, 0.224, 0.225)
 
-# Load Data  ##################################################################
-faces = glob.glob(os.path.join(faces_dir, '*.jpg'))
-metadata = pd.read_csv(os.path.join(meta_dir, 'meta.csv'))
-
-# ImageTransform  ##################################################################
-transform = ImageTransform_2(size=224, mean=mean, std=std)
-
-# Dataset, DataLoader  ##################################################################
-train_size = 0.9
-metadata = metadata.sample(frac=1)
-train_meta = metadata.iloc[:int(len(metadata)*train_size), :]
-val_meta = metadata.iloc[int(len(metadata)*train_size):, :]
-
-print(train_meta.shape)
-print(val_meta.shape)
-print(metadata.shape)
-
-train_dataset = DeepfakeDataset_per_img_2(faces, train_meta, transform, 'train', sample_size=1000)
-
-img, label = train_dataset.__getitem__(8)
-
-print(img)
-print(label)
-
-
-del_mov_name = []
-
-for i in tqdm(range(len(metadata))):
-    row = metadata.iloc[i]
-    mov_name = row['mov']
-    target = [c for c in faces if mov_name in c]
-
-    if len(target) == 0:
-        del_mov_name.append(mov_name)
-
-_metadata = metadata[~metadata['mov'].isin(del_mov_name)]
-
-print(metadata.shape)
-print(_metadata.shape)
-
-_metadata.to_csv('../data/meta/meta2.csv', index=False)
+net = torchvision.models.resnet50(pretrained=True)
+net.fc = nn.Linear(in_features=net.fc.in_features, out_features=1)
+print(net)
