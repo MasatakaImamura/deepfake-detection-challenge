@@ -13,27 +13,16 @@ from torchvision.transforms import Normalize
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ExponentialLR
 from efficientnet_pytorch import EfficientNet
 
-from utils.dfdc_dataset import DeepfakeDataset_per_img_2
+from utils.dfdc_dataset import DeepfakeDataset_per_img_3
 from utils.data_augumentation import ImageTransform, ImageTransform_2
-from utils.pure_trainer import train_model, train_model_centerloss
+from utils.pure_trainer import train_model
 from utils.radam import RAdam
 from utils.utils import seed_everything
-from models.Efficientnet import Efficientnet_centerloss
+from models.Efficientnet import Efficientnet_LSTM
 
 import torchvision.models as models
 
 
-class MyResNeXt(models.resnet.ResNet):
-    def __init__(self, checkpoint):
-        super(MyResNeXt, self).__init__(block=models.resnet.Bottleneck,
-                                        layers=[3, 4, 6, 3],
-                                        groups=32,
-                                        width_per_group=4)
-
-        self.load_state_dict(checkpoint)
-
-        # Override the existing FC layer with a new one.
-        self.fc = nn.Linear(2048, 1)
 
 # Parser  ################################################################
 parser = argparse.ArgumentParser()
@@ -42,10 +31,12 @@ parser.add_argument('-m', '--modelname')
 parser.add_argument('-b', '--batchsize', type=int, default=4)
 parser.add_argument('-bn', '--batchnum', type=int, default=10000)
 parser.add_argument('-ims', '--imgsize', type=int, default=120)
+parser.add_argument('-imn', '--imgnum', type=int, default=15)
 parser.add_argument('-sch', '--scheduler', choices=['step', 'exp', 'cycle'], default='step')
 parser.add_argument('-opt', '--optimizer', choices=['adam', 'radam', 'sgd'], default='adam')
 parser.add_argument('-lr', '--learningrate', type=float, default=0.001)
 parser.add_argument('-tr', '--imagetransform', type=int, default=1)
+parser.add_argument('-drop', '--dropout', type=float, default=0.25)
 args = parser.parse_args()
 
 # Config  ################################################################
@@ -54,7 +45,7 @@ meta_dir = '../data/meta'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 exp = args.experiencename
-img_num = 15
+img_num = args.imgnum
 batch_size = args.batchsize
 batch_num = args.batchnum
 img_size = args.imgsize
@@ -82,8 +73,10 @@ metadata = metadata.sample(frac=1).reset_index(drop=True)
 train_meta = metadata.iloc[:int(len(metadata)*train_size), :]
 val_meta = metadata.iloc[int(len(metadata)*train_size):, :]
 
-train_dataset = DeepfakeDataset_per_img_2(faces, train_meta, transform, 'train', sample_size=12000)
-val_dataset = DeepfakeDataset_per_img_2(faces, val_meta, transform, 'val', sample_size=1200)
+train_dataset = DeepfakeDataset_per_img_3(faces, train_meta, transform, 'train',
+                                          sample_size=12000, seed=seed, img_num=img_num)
+val_dataset = DeepfakeDataset_per_img_3(faces, val_meta, transform, 'val',
+                                        sample_size=1200, seed=seed, img_num=img_num)
 
 dataloaders = {
     'train': DataLoader(train_dataset, batch_size=batch_size, shuffle=True),
@@ -93,7 +86,7 @@ dataloaders = {
 # Model  #########################################################################
 net = None
 if 'efficientnet' in args.modelname:
-    net = Efficientnet_centerloss(output_size=1, model_name=args.modelname)
+    net = Efficientnet_LSTM(output_size=1, model_name=args.modelname, img_num=img_num, dropout_rate=args.dropout)
 
 # Optimizer
 optimizer = None
@@ -107,12 +100,12 @@ elif args.optimizer == 'sgd':
 # Scheduler
 scheduler = None
 if 'step' in args.scheduler:
-    scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
+    scheduler = StepLR(optimizer, step_size=3, gamma=0.5)
 elif 'exp' in args.scheduler:
     scheduler = ExponentialLR(optimizer, gamma=0.95)
 elif 'cycle' in args.scheduler:
     scheduler = CosineAnnealingLR(optimizer, T_max=5, eta_min=args.learningrate*0.1)
 
 # Train  #########################################################################
-train_model_centerloss(dataloaders, net, device, optimizer, scheduler, batch_num, num_epochs=epoch, exp=exp)
+train_model(dataloaders, net, device, optimizer, scheduler, batch_num, num_epochs=epoch, exp=exp)
 

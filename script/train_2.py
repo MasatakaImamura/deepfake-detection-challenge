@@ -10,11 +10,11 @@ import torchvision
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torchvision.transforms import Normalize
-from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ExponentialLR
+from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ExponentialLR, CosineAnnealingWarmRestarts
 from efficientnet_pytorch import EfficientNet
 
-from utils.dfdc_dataset import DeepfakeDataset_per_img_2
-from utils.data_augumentation import ImageTransform, ImageTransform_2
+from utils.dfdc_dataset import DeepfakeDataset_per_img
+from utils.data_augumentation import ImageTransform, ImageTransform_2, ImageTransform_3
 from utils.pure_trainer import train_model
 from utils.radam import RAdam
 from utils.utils import seed_everything
@@ -41,7 +41,7 @@ parser.add_argument('-m', '--modelname')
 parser.add_argument('-b', '--batchsize', type=int, default=4)
 parser.add_argument('-bn', '--batchnum', type=int, default=10000)
 parser.add_argument('-ims', '--imgsize', type=int, default=120)
-parser.add_argument('-sch', '--scheduler', choices=['step', 'exp'], default='step')
+parser.add_argument('-sch', '--scheduler', choices=['step', 'exp', 'cycle'], default='step')
 parser.add_argument('-opt', '--optimizer', choices=['adam', 'radam', 'sgd'], default='adam')
 parser.add_argument('-lr', '--learningrate', type=float, default=0.001)
 parser.add_argument('-tr', '--imagetransform', type=int, default=1)
@@ -74,6 +74,8 @@ if args.imagetransform == 1:
     transform = ImageTransform(size=img_size, mean=mean, std=std)
 elif args.imagetransform == 2:
     transform = ImageTransform_2(size=img_size, mean=mean, std=std)
+elif args.imagetransform == 3:
+    transform = ImageTransform_3(size=img_size, mean=mean, std=std)
 
 # Dataset, DataLoader  ##################################################################
 train_size = 0.9
@@ -81,8 +83,8 @@ metadata = metadata.sample(frac=1).reset_index(drop=True)
 train_meta = metadata.iloc[:int(len(metadata)*train_size), :]
 val_meta = metadata.iloc[int(len(metadata)*train_size):, :]
 
-train_dataset = DeepfakeDataset_per_img_2(faces, train_meta, transform, 'train', sample_size=12000)
-val_dataset = DeepfakeDataset_per_img_2(faces, val_meta, transform, 'val', sample_size=1200)
+train_dataset = DeepfakeDataset_per_img(faces, train_meta, transform, 'train', sample_size=12000)
+val_dataset = DeepfakeDataset_per_img(faces, val_meta, transform, 'val', sample_size=1200)
 
 dataloaders = {
     'train': DataLoader(train_dataset, batch_size=batch_size, shuffle=True),
@@ -103,6 +105,9 @@ elif 'resnet50' in args.modelname:
     net = torchvision.models.resnet50(pretrained=True)
     net.fc = nn.Linear(in_features=net.fc.in_features, out_features=1)
 
+weights = '../weights/efficientnet_b4_3_epoch_14_loss_0.146.pth'
+net.load_state_dict(torch.load(weights, map_location=torch.device(device)))
+
 # Optimizer
 optimizer = None
 if args.optimizer == 'adam':
@@ -118,6 +123,8 @@ if 'step' in args.scheduler:
     scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
 elif 'exp' in args.scheduler:
     scheduler = ExponentialLR(optimizer, gamma=0.95)
+elif 'cycle' in args.scheduler:
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=5, T_mult=1, eta_min=args.learningrate*0.1)
 
 # Train  #########################################################################
 train_model(dataloaders, net, device, optimizer, scheduler, batch_num, num_epochs=epoch, exp=exp)

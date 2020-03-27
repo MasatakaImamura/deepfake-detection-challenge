@@ -16,7 +16,7 @@ from torchvision import transforms
 
 from utils.data_augumentation import ImageTransform, ImageTransform_2
 from utils.utils import seed_everything, get_metadata, get_mov_path, detect_face, detect_face_mtcnn, get_img_from_mov, freeze_until
-from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_per_img, DeepfakeDataset_per_img_2
+from utils.dfdc_dataset import DeepfakeDataset, DeepfakeDataset_per_img, DeepfakeDataset_per_img_2, DeepfakeDataset_per_img_3
 from utils.data_augumentation import GroupImageTransform, ImageTransform
 # from utils.trainer import train_model
 from facenet_pytorch import InceptionResnetV1, MTCNN
@@ -25,7 +25,7 @@ from utils.logger import create_logger, get_logger
 
 from models.Facenet_3d import Facenet_3d
 
-from models.Efficientnet import Efficientnet_3d
+from models.Efficientnet import Efficientnet_LSTM
 from efficientnet_pytorch import EfficientNet
 
 import pandas as pd
@@ -38,11 +38,45 @@ if os.name == 'nt':
 elif os.name == 'posix':
     sep = '/'
 
+# Config  ################################################################
 faces_dir = '../data/faces_temp'
 meta_dir = '../data/meta'
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+img_num = 15
+batch_size = 4
+batch_num = 10000
+img_size = 120
+epoch = 1000
 mean = (0.485, 0.456, 0.406)
 std = (0.229, 0.224, 0.225)
 
-net = torchvision.models.resnet50(pretrained=True)
-net.fc = nn.Linear(in_features=net.fc.in_features, out_features=1)
+# # Load Data  ##################################################################
+# faces = glob.glob(os.path.join(faces_dir, '*.jpg'))
+# metadata = pd.read_csv(os.path.join(meta_dir, 'meta2.csv'))
+#
+# # ImageTransform  ##################################################################
+# transform = ImageTransform(size=img_size, mean=mean, std=std)
+#
+# # Dataset, DataLoader  ##################################################################
+# train_size = 0.9
+# metadata = metadata.sample(frac=1).reset_index(drop=True)
+# train_meta = metadata.iloc[:100, :]
+#
+# train_dataset = DeepfakeDataset_per_img_3(faces, train_meta, transform, 'train', sample_size=12)
+#
+#
+# img, label = train_dataset.__getitem__(0)
+#
+# print(img.size())
+
+net = torchvision.models.resnet34(pretrained=False)
+
+net.relu = nn.ELU(inplace=True)
+net.layer1[0].relu = nn.ELU(inplace=True)
+
 print(net)
+
+print('#' * 60)
+for name, param in net.named_parameters():
+    print(name)

@@ -10,15 +10,14 @@ import torchvision
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torchvision.transforms import Normalize
-from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ExponentialLR
+from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ExponentialLR, CosineAnnealingWarmRestarts
 from efficientnet_pytorch import EfficientNet
 
-from utils.dfdc_dataset import DeepfakeDataset_per_img_2
-from utils.data_augumentation import ImageTransform, ImageTransform_2
-from utils.pure_trainer import train_model, train_model_centerloss
+from utils.dfdc_dataset import DeepfakeDataset_per_img
+from utils.data_augumentation import ImageTransform, ImageTransform_2, ImageTransform_3
+from utils.pure_trainer import train_model, train_model_cutmix
 from utils.radam import RAdam
 from utils.utils import seed_everything
-from models.Efficientnet import Efficientnet_centerloss
 
 import torchvision.models as models
 
@@ -46,6 +45,8 @@ parser.add_argument('-sch', '--scheduler', choices=['step', 'exp', 'cycle'], def
 parser.add_argument('-opt', '--optimizer', choices=['adam', 'radam', 'sgd'], default='adam')
 parser.add_argument('-lr', '--learningrate', type=float, default=0.001)
 parser.add_argument('-tr', '--imagetransform', type=int, default=1)
+parser.add_argument('-cutp', '--cutmixprob', type=float, default=0.5)
+parser.add_argument('-beta', '--beta', type=float, default=1.0)
 args = parser.parse_args()
 
 # Config  ################################################################
@@ -75,6 +76,8 @@ if args.imagetransform == 1:
     transform = ImageTransform(size=img_size, mean=mean, std=std)
 elif args.imagetransform == 2:
     transform = ImageTransform_2(size=img_size, mean=mean, std=std)
+elif args.imagetransform == 3:
+    transform = ImageTransform_3(size=img_size, mean=mean, std=std)
 
 # Dataset, DataLoader  ##################################################################
 train_size = 0.9
@@ -82,8 +85,8 @@ metadata = metadata.sample(frac=1).reset_index(drop=True)
 train_meta = metadata.iloc[:int(len(metadata)*train_size), :]
 val_meta = metadata.iloc[int(len(metadata)*train_size):, :]
 
-train_dataset = DeepfakeDataset_per_img_2(faces, train_meta, transform, 'train', sample_size=12000)
-val_dataset = DeepfakeDataset_per_img_2(faces, val_meta, transform, 'val', sample_size=1200)
+train_dataset = DeepfakeDataset_per_img(faces, train_meta, transform, 'train', sample_size=12000)
+val_dataset = DeepfakeDataset_per_img(faces, val_meta, transform, 'val', sample_size=1200)
 
 dataloaders = {
     'train': DataLoader(train_dataset, batch_size=batch_size, shuffle=True),
@@ -93,7 +96,16 @@ dataloaders = {
 # Model  #########################################################################
 net = None
 if 'efficientnet' in args.modelname:
-    net = Efficientnet_centerloss(output_size=1, model_name=args.modelname)
+    net = EfficientNet.from_pretrained(args.modelname, num_classes=1)
+elif 'resnext' in args.modelname:
+    checkpoint = torch.load('../weights/resnext50_32x4d-7cdf4587.pth')
+    net = MyResNeXt(checkpoint)
+elif 'resnet34' in args.modelname:
+    net = torchvision.models.resnet34(pretrained=True)
+    net.fc = nn.Linear(in_features=net.fc.in_features, out_features=1)
+elif 'resnet50' in args.modelname:
+    net = torchvision.models.resnet50(pretrained=True)
+    net.fc = nn.Linear(in_features=net.fc.in_features, out_features=1)
 
 # Optimizer
 optimizer = None
@@ -111,8 +123,9 @@ if 'step' in args.scheduler:
 elif 'exp' in args.scheduler:
     scheduler = ExponentialLR(optimizer, gamma=0.95)
 elif 'cycle' in args.scheduler:
-    scheduler = CosineAnnealingLR(optimizer, T_max=5, eta_min=args.learningrate*0.1)
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=5, T_mult=1, eta_min=args.learningrate*0.1)
 
 # Train  #########################################################################
-train_model_centerloss(dataloaders, net, device, optimizer, scheduler, batch_num, num_epochs=epoch, exp=exp)
+train_model_cutmix(dataloaders, net, device, optimizer, scheduler, batch_num,
+                   args.cutmixprob, args.beta, num_epochs=epoch, exp=exp)
 

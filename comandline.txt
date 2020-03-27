@@ -18,6 +18,19 @@ python train_2.py -exp efficientnet_b0_7 -m efficientnet-b0 -b 100 -bn 10000 -im
 
 # Centerlossを追加
 python train_centerloss.py -exp efficientnet_b0_8 -m efficientnet-b0 -b 64 -bn 10000 -ims 120 -sch step -opt radam -tr 1
+python train_centerloss.py -exp efficientnet_b0_9 -m efficientnet-b0 -b 64 -bn 10000 -ims 120 -sch step -opt radam -tr 1
+
+# Cosineで実行 Snapshot Ensembleを試してみる
+python train_2.py -exp efficientnet_b0_10 -m efficientnet-b0 -b 64 -bn 10000 -ims 120 -sch cycle -opt radam -tr 1
+
+# Cosineで実行　adamだと自動で学習率変えてしまうから微妙なのかも。。
+# batch_numを2000にして1epochあたりのパラメータ更新頻度を少なくしてみる
+python train_2.py -exp efficientnet_b0_11 -m efficientnet-b0 -b 64 -bn 2000 -ims 120 -sch cycle -opt sgd -tr 1 -lr 0.01
+
+
+# Efficientnet-b1
+python train_2.py -exp efficientnet_b1_1 -m efficientnet-b1 -b 64 -bn 10000 -ims 120 -sch cycle -opt radam -tr 1
+
 
 
 # Efficientnet-b4
@@ -25,11 +38,39 @@ python train.py -exp efficientnet_b4_1 -m efficientnet-b4 -b 64 -bn 200 -ims 120
 python train_2.py -exp efficientnet_b4_2 -m efficientnet-b4 -b 64 -bn 10000 -ims 120 -sch exp -opt radam -tr 1
 0.46
 オーバーフィットする
+python train_2.py -exp efficientnet_b4_3 -m efficientnet-b4 -b 64 -bn 10000 -ims 120 -sch cycle -opt radam -tr 1
+python train_2.py -exp efficientnet_b4_4 -m efficientnet-b4 -b 32 -bn 10000 -ims 120 -sch step -opt radam -tr 1 -lr 0.0001
+これまでの重みを使ってstepでより深く学習
+epoch_55_loss_0.114
+python train_2.py -exp efficientnet_b4_5 -m efficientnet-b4 -b 64 -bn 4000 -ims 120 -sch step -opt radam -tr 3 -lr 0.0001
+efficientnet_b4_3_epoch_14_loss_0.146.pthをベースに学習
+Data Augmentationを充実させてみた
+python train_cutmix.py -exp efficientnet_b4_6 -m efficientnet-b4 -b 64 -bn 8000 -ims 120 -sch cycle -opt radam -tr 3
+Cutmix実装
 
 
+# Efficientnet-b6
+python train_2.py -exp efficientnet_b6_1 -m efficientnet-b6 -b 16 -bn 10000 -ims 120 -sch cycle -opt radam -tr 1
+python train_2.py -exp efficientnet_b6_2 -m efficientnet-b6 -b 16 -bn 10000 -ims 120 -sch step -opt radam -tr 1 -lr 0.0001
+# efficiennet-b6_1のモデル重みから学習開始（cosineではうまく学習しきれない）
 
 # Resnet34
 python train_2.py -exp resnet34_1 -m resnet34 -b 64 -bn 10000 -ims 120 -sch step -opt radam -tr 1
+
+python train_2.py -exp resnet34_2 -m resnet34 -b 64 -bn 10000 -ims 120 -sch step -opt radam -tr 2
+
+
+
+# LRCN
+python train_lrcn.py -exp efficientnet_lstm_b0_1 -m efficientnet-b0 -b 8 -bn 10000 -ims 120 -sch step -opt radam -tr 1
+# dropoutとStepLRを調整
+python train_lrcn.py -exp efficientnet_lstm_b0_2 -m efficientnet-b0 -b 10 -bn 10000 -ims 120 -sch step -opt radam -tr 1
+# うまくがくしゅうされていなさそう　学習率が高すぎるのかも
+python train_lrcn.py -exp efficientnet_lstm_b0_3 -m efficientnet-b0 -b 10 -bn 10000 -ims 120 -sch step -opt radam -tr 1 -lr 0.0001 -imn 10 -drop 0.25
+# 逆に過学習気味な気がする　dropout(p=0.25)
+python train_lrcn.py -exp efficientnet_lstm_b0_4 -m efficientnet-b0 -b 10 -bn 10000 -ims 120 -sch step -opt radam -tr 1 -lr 0.0001 -imn 10 -drop 0.6
+python train_lrcn.py -exp efficientnet_lstm_b0_5 -m efficientnet-b0 -b 10 -bn 10000 -ims 120 -sch step -opt radam -tr 1 -lr 0.0001 -imn 10 -drop 0.8
+python train_lrcn.py -exp efficientnet_lstm_b0_6 -m efficientnet-b0 -b 10 -bn 2000 -ims 120 -sch step -opt radam -tr 1 -lr 0.0001 -imn 15 -drop 0.8
 
 
 
