@@ -1,28 +1,17 @@
-import os, glob, random, argparse
-import numpy as np
+import os, glob, argparse
 import pandas as pd
-from sklearn.metrics import log_loss
 
 import torch
-from torch import nn
 from torch import optim
-import torchvision
-import torch.nn.functional as F
-from torch.utils.data import DataLoader, SubsetRandomSampler
-from torchvision.transforms import Normalize
-from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ExponentialLR
-from efficientnet_pytorch import EfficientNet
+from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import StepLR, ExponentialLR, CosineAnnealingWarmRestarts
 
-from utils.dfdc_dataset import DeepfakeDataset_per_img_3
-from utils.data_augumentation import ImageTransform, ImageTransform_2
-from utils.pure_trainer import train_model
-from utils.radam import RAdam
-from utils.utils import seed_everything
-from models.Efficientnet import Efficientnet_LSTM
-
-import torchvision.models as models
-
-
+from .utils.dfdc_dataset import DeepfakeDataset_2
+from .utils.augumentation import ImageTransform, ImageTransform_2
+from .utils.trainer import train_model
+from .utils.radam import RAdam
+from .utils.utils import seed_everything
+from .models.Efficientnet import Efficientnet_LSTM
 
 # Parser  ################################################################
 parser = argparse.ArgumentParser()
@@ -73,9 +62,9 @@ metadata = metadata.sample(frac=1).reset_index(drop=True)
 train_meta = metadata.iloc[:int(len(metadata)*train_size), :]
 val_meta = metadata.iloc[int(len(metadata)*train_size):, :]
 
-train_dataset = DeepfakeDataset_per_img_3(faces, train_meta, transform, 'train',
+train_dataset = DeepfakeDataset_2(faces, train_meta, transform, 'train',
                                           sample_size=12000, seed=seed, img_num=img_num)
-val_dataset = DeepfakeDataset_per_img_3(faces, val_meta, transform, 'val',
+val_dataset = DeepfakeDataset_2(faces, val_meta, transform, 'val',
                                         sample_size=1200, seed=seed, img_num=img_num)
 
 dataloaders = {
@@ -104,7 +93,7 @@ if 'step' in args.scheduler:
 elif 'exp' in args.scheduler:
     scheduler = ExponentialLR(optimizer, gamma=0.95)
 elif 'cycle' in args.scheduler:
-    scheduler = CosineAnnealingLR(optimizer, T_max=5, eta_min=args.learningrate*0.1)
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=5, eta_min=args.learningrate*0.1)
 
 # Train  #########################################################################
 train_model(dataloaders, net, device, optimizer, scheduler, batch_num, num_epochs=epoch, exp=exp)

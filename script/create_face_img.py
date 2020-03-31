@@ -2,8 +2,8 @@ import cv2, os
 import numpy as np
 from PIL import Image
 import torch
-from utils.utils import get_metadata
-from facenet_pytorch import InceptionResnetV1, MTCNN
+from .utils.utils import get_metadata
+from facenet_pytorch import MTCNN
 
 import pandas as pd
 import glob
@@ -15,7 +15,6 @@ data_dir = ['../input']
 output_dir_face = '../data/faces_temp'
 output_dir_meta = '../data/meta'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# device = 'cpu'
 img_num = 15
 window_size = 20
 

@@ -1,38 +1,19 @@
-import os, glob, random, argparse
-import numpy as np
+import os, glob, argparse
 import pandas as pd
-from sklearn.metrics import log_loss
 
 import torch
 from torch import nn
 from torch import optim
 import torchvision
-import torch.nn.functional as F
-from torch.utils.data import DataLoader, SubsetRandomSampler
-from torchvision.transforms import Normalize
-from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ExponentialLR, CosineAnnealingWarmRestarts
+from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import StepLR, ExponentialLR, CosineAnnealingWarmRestarts
 from efficientnet_pytorch import EfficientNet
 
-from utils.dfdc_dataset import DeepfakeDataset_per_img
-from utils.data_augumentation import ImageTransform, ImageTransform_2, ImageTransform_3
-from utils.pure_trainer import train_model, train_model_cutmix
-from utils.radam import RAdam
-from utils.utils import seed_everything
-
-import torchvision.models as models
-
-
-class MyResNeXt(models.resnet.ResNet):
-    def __init__(self, checkpoint):
-        super(MyResNeXt, self).__init__(block=models.resnet.Bottleneck,
-                                        layers=[3, 4, 6, 3],
-                                        groups=32,
-                                        width_per_group=4)
-
-        self.load_state_dict(checkpoint)
-
-        # Override the existing FC layer with a new one.
-        self.fc = nn.Linear(2048, 1)
+from .utils.dfdc_dataset import DeepfakeDataset
+from .utils.augumentation import ImageTransform, ImageTransform_2, ImageTransform_3
+from .utils.trainer import train_model_cutmix
+from .utils.radam import RAdam
+from .utils.utils import seed_everything
 
 # Parser  ################################################################
 parser = argparse.ArgumentParser()
@@ -85,8 +66,8 @@ metadata = metadata.sample(frac=1).reset_index(drop=True)
 train_meta = metadata.iloc[:int(len(metadata)*train_size), :]
 val_meta = metadata.iloc[int(len(metadata)*train_size):, :]
 
-train_dataset = DeepfakeDataset_per_img(faces, train_meta, transform, 'train', sample_size=12000)
-val_dataset = DeepfakeDataset_per_img(faces, val_meta, transform, 'val', sample_size=1200)
+train_dataset = DeepfakeDataset(faces, train_meta, transform, 'train', sample_size=12000)
+val_dataset = DeepfakeDataset(faces, val_meta, transform, 'val', sample_size=1200)
 
 dataloaders = {
     'train': DataLoader(train_dataset, batch_size=batch_size, shuffle=True),
@@ -97,9 +78,6 @@ dataloaders = {
 net = None
 if 'efficientnet' in args.modelname:
     net = EfficientNet.from_pretrained(args.modelname, num_classes=1)
-elif 'resnext' in args.modelname:
-    checkpoint = torch.load('../weights/resnext50_32x4d-7cdf4587.pth')
-    net = MyResNeXt(checkpoint)
 elif 'resnet34' in args.modelname:
     net = torchvision.models.resnet34(pretrained=True)
     net.fc = nn.Linear(in_features=net.fc.in_features, out_features=1)
@@ -127,5 +105,5 @@ elif 'cycle' in args.scheduler:
 
 # Train  #########################################################################
 train_model_cutmix(dataloaders, net, device, optimizer, scheduler, batch_num,
-                   args.cutmixprob, args.beta, num_epochs=epoch, exp=exp)
+                   epoch, args.cutmixprob, args.beta, exp=exp)
 

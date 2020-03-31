@@ -30,6 +30,8 @@ python train_2.py -exp efficientnet_b0_11 -m efficientnet-b0 -b 64 -bn 2000 -ims
 
 # Efficientnet-b1
 python train_2.py -exp efficientnet_b1_1 -m efficientnet-b1 -b 64 -bn 10000 -ims 120 -sch cycle -opt radam -tr 1
+python train_cutmix.py -exp efficientnet_b1_2 -m efficientnet-b1 -b 32 -bn 5000 -ims 120 -sch cycle -opt radam -tr 3
+python train_cutmix.py -exp efficientnet_b1_3 -m efficientnet-b1 -b 32 -bn 5000 -ims 120 -sch step -opt radam -tr 3 -lr 0.0001
 
 
 
@@ -45,7 +47,7 @@ epoch_55_loss_0.114
 python train_2.py -exp efficientnet_b4_5 -m efficientnet-b4 -b 64 -bn 4000 -ims 120 -sch step -opt radam -tr 3 -lr 0.0001
 efficientnet_b4_3_epoch_14_loss_0.146.pthをベースに学習
 Data Augmentationを充実させてみた
-python train_cutmix.py -exp efficientnet_b4_6 -m efficientnet-b4 -b 64 -bn 8000 -ims 120 -sch cycle -opt radam -tr 3
+python train_cutmix.py -exp efficientnet_b4_6 -m efficientnet-b4 -b 32 -bn 8000 -ims 120 -sch cycle -opt radam -tr 3
 Cutmix実装
 
 
@@ -53,6 +55,11 @@ Cutmix実装
 python train_2.py -exp efficientnet_b6_1 -m efficientnet-b6 -b 16 -bn 10000 -ims 120 -sch cycle -opt radam -tr 1
 python train_2.py -exp efficientnet_b6_2 -m efficientnet-b6 -b 16 -bn 10000 -ims 120 -sch step -opt radam -tr 1 -lr 0.0001
 # efficiennet-b6_1のモデル重みから学習開始（cosineではうまく学習しきれない）
+python train_cutmix.py -exp efficientnet_b6_3 -m efficientnet-b6 -b 32 -bn 8000 -ims 120 -sch step -opt radam -tr 3
+# Cutmix実装
+
+
+
 
 # Resnet34
 python train_2.py -exp resnet34_1 -m resnet34 -b 64 -bn 10000 -ims 120 -sch step -opt radam -tr 1
